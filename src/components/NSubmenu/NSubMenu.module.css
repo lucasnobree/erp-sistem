@@ -1,0 +1,42 @@
+.subMenu {
+  background-color: #FFFFFF; /* Cor de fundo clara */
+  border-radius: 15px;
+  padding: 20px;
+}
+
+.Title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 26px;
+  font-family: NexaBold, sans-serif;
+  margin-bottom: 10px;
+}
+
+.addButton {
+  background-color: #3F8CFF;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.subMenuList {
+  list-style: none;
+  padding: 0;
+}
+
+.Desktop {
+    display: flex;
+    flex-direction: row;
+    height: 100dvh;
+    background-color: #3f8cff2a;
+}
+
+.Tela {
+    display: flex;
+    flex-direction: column;
+    flex: auto;
+    margin: 15px;
+}

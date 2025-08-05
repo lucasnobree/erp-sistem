@@ -1,0 +1,24 @@
+.General {
+  font-family: NexaBold, sans-serif;
+  display: flex;
+  padding: 5px;
+}
+
+.Icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;  
+  margin-left: 15px;
+  margin-top: 30px;
+  margin-bottom: 50px;
+  width: 50px;
+  height:50px;
+  background-color: #3F8CFF;
+}
+
+.Drawer {
+  background-color: #ffffff;
+  max-width: 200px;
+  border-radius: 15px;
+  transform: scale(0.98);
+}
