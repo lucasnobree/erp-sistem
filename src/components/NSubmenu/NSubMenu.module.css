@@ -4,12 +4,16 @@
   padding: 20px;
 }
 
-.Title {
+.Header {
   display: flex;
   justify-content: space-between;
   font-size: 26px;
-  font-family: NexaBold, sans-serif;
   margin-bottom: 10px;
+}
+
+.Title{
+  display: flex;
+  font-family: NexaBold, sans-serif;
 }
 
 .addButton {
