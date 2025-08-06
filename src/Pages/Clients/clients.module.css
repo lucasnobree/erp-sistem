@@ -1,6 +1,12 @@
-.Desktop {
-    display: flex;
-    flex-direction: row;
-    height: 100dvh;
-    background-color: #3f8cff2a;
+.Container {
+  width: 100%;
+  height: 100%;
 }
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .Container {
+    padding: 0;
+  }
+}
+
