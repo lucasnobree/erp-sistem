@@ -2,17 +2,21 @@ import { Avatar, Badge } from "@mui/material";
 import styles from "./NHeader.module.css";
 import { NotificationsNone, Search } from "@mui/icons-material";
 
-export function NHeader({ profileName }) {
+export function NHeader({ profileName, pesquisar = true }) {
   return (
     (profileName = "Nome Da Pessoa"),
     (
       <header className={styles.Header}>
-        <div className={styles.Pesquisa}>
-          <Search /> <span>Search</span>
-        </div>
+        {pesquisar && (
+          <div className={styles.Pesquisa}>
+            <Search /> <span>Search</span>
+          </div>
+        )}
         <div style={{ display: "flex", gap: "10px" }}>
           <div className={styles.Notifications}>
-            <Badge color="primary" variant="dot"> {/* //invisible={} */} 
+            <Badge color="primary" variant="dot">
+              {" "}
+              {/* //invisible={} */}
               <NotificationsNone />
             </Badge>
           </div>
