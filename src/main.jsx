@@ -9,7 +9,7 @@ import Clientes from "./Pages/Clients/clients.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <MainLayout nomeTela="Dashboard" />,
+    element: <MainLayout />,
     children: [
       {
         index: true,

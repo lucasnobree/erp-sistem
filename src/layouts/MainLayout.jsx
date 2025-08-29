@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { NMenu } from "../components/NMenu/NMenu";
-import { NSubMenu } from "../components/NSubmenu/NSubMenu";
+import { NHeader } from "../components/NHeader/NHeader";
 import styles from "./MainLayout.module.css";
 
 /**
@@ -8,12 +8,12 @@ import styles from "./MainLayout.module.css";
  * Contém o menu lateral e o submenu superior
  * Utiliza Outlet para renderizar as páginas filhas
  */
-export function MainLayout({ nomeTela = "Dashboard" }) {
+export function MainLayout() {
   return (
     <div className={styles.Desktop}>
       <NMenu />
       <div className={styles.Content}>
-        <NSubMenu nomeTela={nomeTela} />
+        <NHeader/>
         <main className={styles.MainContent}>
           <Outlet />
         </main>

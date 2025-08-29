@@ -10,6 +10,7 @@ import {
 import styles from "./dashboard.module.css";
 
 export default function Dashboard() {
+  console.log("Dashboard component loaded");
   // Dados mockados para demonstração
   const dashboardData = [
     {
