@@ -3,7 +3,7 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: #3F8CFF;
+  background-color: #25232c;
 }
 
 .Content {
@@ -17,7 +17,7 @@
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  background-color: #3F8CFF;
+  background-color: #25232c;
 }
 
 /* Responsividade para dispositivos móveis */

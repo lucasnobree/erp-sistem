@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { MainLayout } from "./layouts/MainLayout";
 import Dashboard from "./Pages/Dashboard/dashboard.jsx";
 import Clientes from "./Pages/Clients/clients.jsx";
+import Eventos from "./Pages/Events/events.jsx";
 
 const router = createBrowserRouter([
   {
@@ -13,7 +14,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: <Login />,
       },
       {
         path: "dashboard",
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
       {
         path: "clients",
         element: <Clientes />,
+      },
+      {
+        path: "events",
+        element: <Eventos />,
       }
     ]
   }

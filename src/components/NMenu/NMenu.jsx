@@ -6,7 +6,7 @@ import { AutoAwesomeMotion, CalendarToday, Dashboard, Group } from "@mui/icons-m
 const menuItems = [
   { id: "dashboard", icon: <Dashboard />, name: "Dashboards", route: "/Dashboard" },
   { id: "clients", icon: <AutoAwesomeMotion />, name: "Clientes", route: "/Clients" },
-  { id: "events", icon: <CalendarToday />, name: "Atividades", route: "/Kanaban" },
+  { id: "events", icon: <CalendarToday />, name: "Atividades", route: "/Events" },
   { id: "team", icon: <Group />, name: "Grupo", route: "/Group" },
 ];
 

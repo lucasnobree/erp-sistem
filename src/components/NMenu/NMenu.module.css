@@ -2,6 +2,9 @@
   font-family: NexaBold, sans-serif;
   display: flex;
   padding: 5px;
+  background-color:#25232c;
+  border-color: aliceblue;
+  border-right: 1px solid #4a4658;
 }
 
 .Icon {
@@ -17,7 +20,7 @@
 }
 
 .Drawer {
-  background-color: #ffffff;
+  background-color: #25232c;
   max-width: 200px;
   border-radius: 15px;
   transform: scale(0.98);

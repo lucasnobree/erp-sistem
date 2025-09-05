@@ -28,9 +28,11 @@ import styles from "./KanbanBoard.module.css";
  * @param {function} onCardDelete - Função chamada ao deletar card
  * @param {function} onCardMove - Função chamada ao mover card
  */
+
+
 export function KanbanBoard({
-  columns = [],
-  cards = [],
+  columns = [{color: "#1976d2", id: 1, name: "To Do", order: 0}],
+  cards = [{id: 1, title: "Sample Task", description: "This is a sample task", priority: "Alta", status: "Pendente", dueDate: "2024-12-31", assignee: "Lucas", columnId: 1}],
   onColumnAdd,
   onColumnEdit,
   onColumnDelete,
