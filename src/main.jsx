@@ -6,16 +6,16 @@ import { MainLayout } from "./layouts/MainLayout";
 import Dashboard from "./Pages/Dashboard/dashboard.jsx";
 import Clientes from "./Pages/Clients/clients.jsx";
 import Eventos from "./Pages/Events/events.jsx";
+import Login from "./Pages/Login/login.jsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
+    element: <Login />,
+  },
+  {
     element: <MainLayout />,
     children: [
-      {
-        index: true,
-        // element: <Login />,
-      },
       {
         path: "dashboard",
         element: <Dashboard />,
