@@ -14,23 +14,36 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
+    path: "/dashboard",
+    element: <MainLayout pesquisar={false} />,
+    children: [
+      {
+        path: "",
+        element: <Dashboard />,
+      },
+    ],
+  },
+  {
+    path: "/clients",
     element: <MainLayout />,
     children: [
       {
-        path: "dashboard",
-        element: <Dashboard />,
-      },
-      {
-        path: "clients",
+        path: "",
         element: <Clientes />,
       },
+    ],
+  },
+  {
+    path: "/events",
+    element: <MainLayout />,
+    children: [
       {
-        path: "events",
+        path: "",
         element: <Eventos />,
-      }
-    ]
-  }
-])
+      },
+    ],
+  },
+]);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

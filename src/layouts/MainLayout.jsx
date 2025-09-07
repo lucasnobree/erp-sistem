@@ -8,12 +8,12 @@ import styles from "./MainLayout.module.css";
  * Contém o menu lateral e o submenu superior
  * Utiliza Outlet para renderizar as páginas filhas
  */
-export function MainLayout() {
+export function MainLayout({pesquisar = true}) {
   return (
     <div className={styles.Desktop}>
       <NMenu />
       <div className={styles.Content}>
-        <NHeader/>
+        <NHeader pesquisar={pesquisar}/>
         <main className={styles.MainContent}>
           <Outlet />
         </main>

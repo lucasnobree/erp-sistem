@@ -51,18 +51,11 @@ export default function Dashboard() {
     }
   ];
 
-  const handleAddNew = () => {
-    console.log("Adicionar novo item ao dashboard");
-    // Implementar lógica de adição
-  };
-
   return (
     <Box className={styles.Container}>
       <PageHeader
         title="Dashboard"
         subtitle="Visão geral do seu negócio"
-        onAdd={handleAddNew}
-        addButtonText="Novo Widget"
       />
       
       <Grid container spacing={3}>
@@ -88,12 +81,14 @@ export default function Dashboard() {
             <Box className={styles.ChartPlaceholder}>
               <h3>Gráfico de Vendas</h3>
               <p>Aqui será implementado um gráfico de vendas ao longo do tempo</p>
+              <p>-- Em desenvolvimento --</p>
             </Box>
           </Grid>
           <Grid item xs={12} md={4}>
             <Box className={styles.ChartPlaceholder}>
               <h3>Atividades Recentes</h3>
               <p>Lista das atividades mais recentes do sistema</p>
+              <p>-- Em desenvolvimento --</p>
             </Box>
           </Grid>
         </Grid>

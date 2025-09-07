@@ -15,7 +15,8 @@
 
 .MainContent {
   flex: 1;
-  padding: 24px;
+  padding-left: 24px;
+  padding-right: 24px;
   overflow-y: auto;
   background-color: #25232c;
 }
