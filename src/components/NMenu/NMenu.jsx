@@ -7,7 +7,7 @@ const menuItems = [
   { id: "dashboard", icon: <Dashboard />, name: "Dashboards", route: "/Dashboard" },
   { id: "clients", icon: <AutoAwesomeMotion />, name: "Clientes", route: "/Clients" },
   { id: "events", icon: <CalendarToday />, name: "Atividades", route: "/Events" },
-  { id: "team", icon: <Group />, name: "Grupo", route: "/Group" },
+  // { id: "team", icon: <Group />, name: "Grupo", route: "/Group" },
 ];
 
 export function NMenu() {

@@ -16,9 +16,9 @@
 
 .listItem:hover {
   transition: 0.2s;
-  color: #3f8cff;
+  color: #25232c;
   transition: background-color 0.5s;
-  background-color: #3f8cff38;
+  background-color: #4a46587c;
 }
 
 .listItemIcon {
@@ -30,10 +30,11 @@
 
 .listItemText {
   font-family: Nexa;
+  color: white;
 }
 
 .active {
   /* Estilos para o item ativo */
-  color: #3f8cff;
-  background-color: #3f8cff38;
+  color: #25232c;
+  background-color: #4a4658;
 }
