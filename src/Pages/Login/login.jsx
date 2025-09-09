@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Grid, Box, Button, TextField, Typography } from "@mui/material";
 import styles from "./login.module.css";
+import GitHubIcon from '@mui/icons-material/GitHub';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import GoogleIcon from '@mui/icons-material/Google';
 
 export default function Login() {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -46,10 +50,10 @@ export default function Login() {
             <form className={styles.form}>
               <Typography variant="h4">Entrar</Typography>
               <div className={styles.socialIcons}>
-                <Button className={styles.icon}>G+</Button>
-                <Button className={styles.icon}>F</Button>
-                <Button className={styles.icon}>P</Button>
-                <Button className={styles.icon}>In</Button>
+                <Button className={styles.icon}><GoogleIcon/></Button>
+                <Button className={styles.icon}><FacebookIcon/></Button>
+                <Button className={styles.icon}><GitHubIcon/></Button>
+                <Button className={styles.icon}><LinkedInIcon/></Button>
               </div>
               <Typography variant="body2">ou use seu email e senha</Typography>
               <TextField
@@ -91,10 +95,10 @@ export default function Login() {
             <form className={styles.form}>
               <Typography variant="h4">Criar Conta</Typography>
               <div className={styles.socialIcons}>
-                <Button className={styles.icon}>G+</Button>
-                <Button className={styles.icon}>F</Button>
-                <Button className={styles.icon}>P</Button>
-                <Button className={styles.icon}>In</Button>
+                <Button className={styles.icon}><GoogleIcon/></Button>
+                <Button className={styles.icon}><FacebookIcon/></Button>
+                <Button className={styles.icon}><GitHubIcon/></Button>
+                <Button className={styles.icon}><LinkedInIcon/></Button>
               </div>
               <Typography variant="body2">
                 ou use seu email para se cadastrar
