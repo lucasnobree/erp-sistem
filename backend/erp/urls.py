@@ -3,6 +3,7 @@ Project URL configuration for erp.
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -15,6 +16,8 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
+    # Home -> Swagger UI
+    path('', RedirectView.as_view(url='/api/docs/', permanent=False)),
     path('admin/', admin.site.urls),
 
     # JWT Authentication endpoints
