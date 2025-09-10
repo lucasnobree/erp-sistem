@@ -111,6 +111,26 @@ SPECTACULAR_SETTINGS = {
     'SECURITY': [
         {'bearerAuth': []},
     ],
+    'SORT_OPERATIONS': True,
+    'SORT_TAGS': True,
+    'TAGS': [
+        {
+            'name': 'Autenticação',
+            'description': 'Endpoints de autenticação via JWT (obter, refresh e verificar tokens).'
+        },
+        {
+            'name': 'Clientes',
+            'description': 'CRUD de clientes, com busca, ordenação e filtro por status.'
+        },
+    ],
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+        'defaultModelExpandDepth': 1,
+        'defaultModelsExpandDepth': -1,
+        'displayRequestDuration': True,
+    },
     'COMPONENTS': {
         'securitySchemes': {
             'bearerAuth': {
