@@ -43,17 +43,28 @@ export function ClientForm({
 
   // Preencher formulário quando initialData mudar
   useEffect(() => {
-    if (mode === "edit" || mode === "view") {
-      setFormData({
-        nome: initialData.nome || "",
-        email: initialData.email || "",
-        telefone: initialData.telefone || "",
-        empresa: initialData.empresa || "",
-        status: initialData.status || "Ativo",
-        dataUltimoContato: initialData.dataUltimoContato || new Date().toISOString().split('T')[0]
+    fetch("http://127.0.0.1:8000/api/clientes/", {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access")}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Resposta da API:", data, "É array?", Array.isArray(data));
+        if (Array.isArray(data)) {
+          setClientsData(data);
+        } else {
+          setClientsData([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar clientes:", err);
+        setClientsData([]);
       });
-    }
-  }, [initialData, mode]);
+  }, []);
+
+
 
 
   const handleInputChange = (field) => (e) => {
