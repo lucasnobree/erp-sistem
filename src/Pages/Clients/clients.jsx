@@ -12,11 +12,31 @@ export default function Clientes() {
 
   // Buscar clientes na API quando o componente carregar
   useEffect(() => {
-    fetch("http://localhost:8000/api/clientes/") // ajuste a URL para sua API Django
+    const token = localStorage.getItem("access");
+
+    if (!token) return; // se não tiver token, não tenta buscar
+
+    fetch("http://127.0.0.1:8000/api/clientes/", {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
       .then((res) => res.json())
-      .then((data) => setClientsData(data))
-      .catch((err) => console.error("Erro ao buscar clientes:", err));
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setClientsData(data);
+        } else {
+          console.error("Resposta inesperada:", data);
+          setClientsData([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar clientes:", err);
+        setClientsData([]);
+      });
   }, []);
+
 
   // Configuração das colunas da tabela
   const columns = [
@@ -51,24 +71,63 @@ export default function Clientes() {
 
   const handleSubmitClient = async (newClient) => {
     try {
-      const response = await fetch("http://localhost:8000/api/clientes/", {
+      // login
+      const authResponse = await fetch("http://127.0.0.1:8000/api/token/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newClient),
+        body: JSON.stringify({ username: "davy", password: "123" }),
+      });
+
+      if (!authResponse.ok) throw new Error("Falha na autenticação");
+
+      const { access } = await authResponse.json();
+      localStorage.setItem("access", access);
+
+      // cria cliente
+      const payload = {
+        nome: newClient.nome,
+        email: newClient.email,
+        telefone: newClient.telefone,
+        empresa: newClient.empresa,
+        status: newClient.status.toUpperCase(),
+        ultimo_contato: new Date(newClient.dataUltimoContato).toISOString(),
+      };
+
+      const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${access}`,
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao cadastrar cliente");
+        const errorText = await response.text();
+        throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
       }
 
-      const savedClient = await response.json();
+      // ✅ em vez de adicionar só o cliente criado, recarregue toda a lista
+      const clientsResponse = await fetch("http://127.0.0.1:8000/api/clientes/", {
+        headers: {
+          "Authorization": `Bearer ${access}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-      // Atualiza a lista sem precisar recarregar
-      setClientsData((prev) => [...prev, savedClient]);
+      const allClients = await clientsResponse.json();
+      setClientsData(allClients);
+
+      setIsFormOpen(false);
+
     } catch (err) {
-      console.error(err);
+      console.error("Erro completo:", err);
+      alert(`Erro: ${err.message}`);
     }
   };
+
+
+
 
   return (
     <Box className={styles.Container}>
