@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,9 +9,10 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  TextField,
+  Box
 } from "@mui/material";
-import { ValidatedInput, validationRules } from "../ValidatedInput/ValidatedInput";
 import styles from "./ClientForm.module.css";
 
 /**
@@ -22,35 +23,57 @@ import styles from "./ClientForm.module.css";
  * @param {object} initialData - Dados iniciais para edição
  * @param {string} mode - Modo do formulário (create, edit, view)
  */
-export function ClientForm({ 
-  open, 
-  onClose, 
-  onSubmit, 
-  initialData = {}, 
-  mode = "create" 
+export function ClientForm({
+  open,
+  onClose,
+  onSubmit,
+  initialData = {},
+  mode = "create"
 }) {
   const [formData, setFormData] = useState({
-    nome: initialData.nome || "",
-    email: initialData.email || "",
-    telefone: initialData.telefone || "",
-    empresa: initialData.empresa || "",
-    cargo: initialData.cargo || "",
-    endereco: initialData.endereco || "",
-    cidade: initialData.cidade || "",
-    estado: initialData.estado || "",
-    cep: initialData.cep || "",
-    status: initialData.status || "Ativo",
-    observacoes: initialData.observacoes || ""
+    nome: "",
+    email: "",
+    telefone: "",
+    empresa: "",
+    status: "Ativo",
+    dataUltimoContato: new Date().toISOString().split('T')[0]
   });
 
   const [errors, setErrors] = useState({});
 
-  const handleInputChange = (field) => (value) => {
+  // Preencher formulário quando initialData mudar
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/clientes/", {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access")}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Resposta da API:", data, "É array?", Array.isArray(data));
+        if (Array.isArray(data)) {
+          setClientsData(data);
+        } else {
+          setClientsData([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar clientes:", err);
+        setClientsData([]);
+      });
+  }, []);
+
+
+
+
+  const handleInputChange = (field) => (e) => {
+    const value = e.target.value;
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    
+
     // Limpar erro do campo quando o usuário começar a digitar
     if (errors[field]) {
       setErrors(prev => ({
@@ -70,26 +93,12 @@ export function ClientForm({
 
     if (!formData.email.trim()) {
       newErrors.email = "Email é obrigatório";
-    } else if (!validationRules.email(formData.email)) {
-      // Email válido
-    } else {
-      newErrors.email = validationRules.email(formData.email);
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email inválido";
     }
 
     if (!formData.telefone.trim()) {
       newErrors.telefone = "Telefone é obrigatório";
-    } else {
-      const phoneError = validationRules.phone(formData.telefone);
-      if (phoneError) {
-        newErrors.telefone = phoneError;
-      }
-    }
-
-    if (formData.cep && formData.cep.length > 0) {
-      const cleanCep = formData.cep.replace(/\D/g, "");
-      if (cleanCep.length !== 8) {
-        newErrors.cep = "CEP deve ter 8 dígitos";
-      }
     }
 
     setErrors(newErrors);
@@ -99,180 +108,133 @@ export function ClientForm({
   const handleSubmit = () => {
     if (validateForm()) {
       onSubmit(formData);
-      onClose();
-      // Reset form
-      setFormData({
-        nome: "",
-        email: "",
-        telefone: "",
-        empresa: "",
-        cargo: "",
-        endereco: "",
-        cidade: "",
-        estado: "",
-        cep: "",
-        status: "Ativo",
-        observacoes: ""
-      });
+      handleClose();
     }
   };
 
+  const handleClose = () => {
+    setFormData({
+      nome: "",
+      email: "",
+      telefone: "",
+      empresa: "",
+      status: "Ativo",
+      dataUltimoContato: new Date().toISOString().split('T')[0]
+    });
+    setErrors({});
+    onClose();
+  };
+
   const isReadOnly = mode === "view";
-  const title = mode === "create" ? "Novo Cliente" : 
-                mode === "edit" ? "Editar Cliente" : "Visualizar Cliente";
+  const title = mode === "create" ? "Novo Cliente" :
+    mode === "edit" ? "Editar Cliente" : "Visualizar Cliente";
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
       fullWidth
       className={styles.Dialog}
     >
       <DialogTitle className={styles.Title}>
         {title}
       </DialogTitle>
-      
+
       <DialogContent className={styles.Content}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <ValidatedInput
+          <Grid item xs={12}>
+            <TextField
               label="Nome Completo"
               value={formData.nome}
               onChange={handleInputChange("nome")}
               required
               disabled={isReadOnly}
-              validationRules={[validationRules.minLength(2)]}
+              error={!!errors.nome}
+              helperText={errors.nome}
               placeholder="Digite o nome completo"
+              fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <ValidatedInput
+
+          <Grid item xs={12}>
+            <TextField
               label="Email"
               type="email"
               value={formData.email}
               onChange={handleInputChange("email")}
               required
               disabled={isReadOnly}
-              validationRules={[validationRules.email]}
+              error={!!errors.email}
+              helperText={errors.email}
               placeholder="exemplo@email.com"
+              fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <ValidatedInput
+
+          <Grid item xs={12}>
+            <TextField
               label="Telefone"
               value={formData.telefone}
               onChange={handleInputChange("telefone")}
               required
               disabled={isReadOnly}
-              mask="phone"
-              validationRules={[validationRules.phone]}
+              error={!!errors.telefone}
+              helperText={errors.telefone}
               placeholder="(11) 99999-9999"
+              fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <ValidatedInput
+
+          <Grid item xs={12}>
+            <TextField
               label="Empresa"
               value={formData.empresa}
               onChange={handleInputChange("empresa")}
               disabled={isReadOnly}
               placeholder="Nome da empresa"
+              fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <ValidatedInput
-              label="Cargo"
-              value={formData.cargo}
-              onChange={handleInputChange("cargo")}
-              disabled={isReadOnly}
-              placeholder="Cargo na empresa"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
+
+          <Grid item xs={12}>
             <FormControl fullWidth disabled={isReadOnly}>
               <InputLabel>Status</InputLabel>
               <Select
                 value={formData.status}
                 label="Status"
-                onChange={(e) => handleInputChange("status")(e.target.value)}
+                onChange={handleInputChange("status")}
               >
                 <MenuItem value="Ativo">Ativo</MenuItem>
                 <MenuItem value="Inativo">Inativo</MenuItem>
-                <MenuItem value="Prospect">Prospect</MenuItem>
-                <MenuItem value="Lead">Lead</MenuItem>
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12}>
-            <ValidatedInput
-              label="Endereço"
-              value={formData.endereco}
-              onChange={handleInputChange("endereco")}
+            <TextField
+              label="Data do Último Contato"
+              type="date"
+              value={formData.dataUltimoContato}
+              onChange={handleInputChange("dataUltimoContato")}
               disabled={isReadOnly}
-              placeholder="Rua, número, complemento"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <ValidatedInput
-              label="Cidade"
-              value={formData.cidade}
-              onChange={handleInputChange("cidade")}
-              disabled={isReadOnly}
-              placeholder="Nome da cidade"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <ValidatedInput
-              label="Estado"
-              value={formData.estado}
-              onChange={handleInputChange("estado")}
-              disabled={isReadOnly}
-              validationRules={[validationRules.maxLength(2)]}
-              placeholder="SP"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={4}>
-            <ValidatedInput
-              label="CEP"
-              value={formData.cep}
-              onChange={handleInputChange("cep")}
-              disabled={isReadOnly}
-              mask="cep"
-              placeholder="00000-000"
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <ValidatedInput
-              label="Observações"
-              value={formData.observacoes}
-              onChange={handleInputChange("observacoes")}
-              disabled={isReadOnly}
-              multiline
-              rows={3}
-              placeholder="Observações adicionais sobre o cliente"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              fullWidth
             />
           </Grid>
         </Grid>
       </DialogContent>
-      
+
       <DialogActions className={styles.Actions}>
-        <Button onClick={onClose} color="secondary">
+        <Button onClick={handleClose} color="secondary">
           {isReadOnly ? "Fechar" : "Cancelar"}
         </Button>
         {!isReadOnly && (
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained" 
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
             color="primary"
           >
             {mode === "create" ? "Criar Cliente" : "Salvar Alterações"}
@@ -282,4 +244,3 @@ export function ClientForm({
     </Dialog>
   );
 }
-

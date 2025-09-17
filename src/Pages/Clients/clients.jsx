@@ -1,65 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Chip } from "@mui/material";
 import { PageHeader } from "../../components/common/PageHeader/PageHeader";
 import { CustomTable } from "../../components/common/CustomTable/CustomTable";
+import { ClientForm } from "../../components/forms/ClientForm/ClientForm";
 import styles from "./clients.module.css";
 
 export default function Clientes() {
   const [selectedRows, setSelectedRows] = useState([]);
+  const [clientsData, setClientsData] = useState([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Dados mockados para demonstração
-  const clientsData = [
-    {
-      id: 1,
-      nome: "João Silva",
-      email: "joao@email.com",
-      telefone: "(11) 99999-9999",
-      empresa: "Tech Solutions",
-      status: "Ativo",
-      dataUltimoContato: "2024-01-15"
-    },
-    {
-      id: 2,
-      nome: "Maria Santos",
-      email: "maria@email.com",
-      telefone: "(11) 88888-8888",
-      empresa: "Digital Corp",
-      status: "Inativo",
-      dataUltimoContato: "2024-01-10"
-    },
-    {
-      id: 3,
-      nome: "Pedro Oliveira",
-      email: "pedro@email.com",
-      telefone: "(11) 77777-7777",
-      empresa: "StartUp Inc",
-      status: "Ativo",
-      dataUltimoContato: "2024-01-20"
-    }
-  ];
+  // Buscar clientes na API quando o componente carregar
+  useEffect(() => {
+    const token = localStorage.getItem("access");
+
+    if (!token) return; // se não tiver token, não tenta buscar
+
+    fetch("http://127.0.0.1:8000/api/clientes/", {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setClientsData(data);
+        } else {
+          console.error("Resposta inesperada:", data);
+          setClientsData([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar clientes:", err);
+        setClientsData([]);
+      });
+  }, []);
+
 
   // Configuração das colunas da tabela
   const columns = [
-    {
-      id: "nome",
-      label: "Nome",
-      align: "left"
-    },
-    {
-      id: "email",
-      label: "Email",
-      align: "left"
-    },
-    {
-      id: "telefone",
-      label: "Telefone",
-      align: "left"
-    },
-    {
-      id: "empresa",
-      label: "Empresa",
-      align: "left"
-    },
+    { id: "nome", label: "Nome", align: "left" },
+    { id: "email", label: "Email", align: "left" },
+    { id: "telefone", label: "Telefone", align: "left" },
+    { id: "empresa", label: "Empresa", align: "left" },
     {
       id: "status",
       label: "Status",
@@ -76,29 +60,74 @@ export default function Clientes() {
       id: "dataUltimoContato",
       label: "Último Contato",
       align: "center",
-      render: (value) => new Date(value).toLocaleDateString("pt-BR")
+      render: (value) =>
+        value ? new Date(value).toLocaleDateString("pt-BR") : "-"
     }
   ];
 
   const handleAddClient = () => {
-    console.log("Adicionar novo cliente");
-    // Implementar modal ou navegação para formulário de criação
+    setIsFormOpen(true);
   };
 
-  const handleEditClient = (clientId) => {
-    console.log("Editar cliente:", clientId);
-    // Implementar lógica de edição
+  const handleSubmitClient = async (newClient) => {
+    try {
+      // login
+      const authResponse = await fetch("http://127.0.0.1:8000/api/token/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "davy", password: "123" }),
+      });
+
+      if (!authResponse.ok) throw new Error("Falha na autenticação");
+
+      const { access } = await authResponse.json();
+      localStorage.setItem("access", access);
+
+      // cria cliente
+      const payload = {
+        nome: newClient.nome,
+        email: newClient.email,
+        telefone: newClient.telefone,
+        empresa: newClient.empresa,
+        status: newClient.status.toUpperCase(),
+        ultimo_contato: new Date(newClient.dataUltimoContato).toISOString(),
+      };
+
+      const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${access}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
+      }
+
+      // ✅ em vez de adicionar só o cliente criado, recarregue toda a lista
+      const clientsResponse = await fetch("http://127.0.0.1:8000/api/clientes/", {
+        headers: {
+          "Authorization": `Bearer ${access}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const allClients = await clientsResponse.json();
+      setClientsData(allClients);
+
+      setIsFormOpen(false);
+
+    } catch (err) {
+      console.error("Erro completo:", err);
+      alert(`Erro: ${err.message}`);
+    }
   };
 
-  const handleDeleteClient = (clientId) => {
-    console.log("Deletar cliente:", clientId);
-    // Implementar lógica de exclusão
-  };
 
-  const handleViewClient = (clientId) => {
-    console.log("Visualizar cliente:", clientId);
-    // Implementar lógica de visualização
-  };
+
 
   return (
     <Box className={styles.Container}>
@@ -108,19 +137,23 @@ export default function Clientes() {
         onAdd={handleAddClient}
         addButtonText="Novo Cliente"
       />
-      
+
       <CustomTable
         columns={columns}
         data={clientsData}
         selectable={true}
         selectedRows={selectedRows}
         onSelectionChange={setSelectedRows}
-        onEdit={handleEditClient}
-        onDelete={handleDeleteClient}
-        onView={handleViewClient}
         showActions={true}
+      />
+
+      {/* Formulário de Cliente */}
+      <ClientForm
+        open={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleSubmitClient}
+        mode="create"
       />
     </Box>
   );
 }
-
