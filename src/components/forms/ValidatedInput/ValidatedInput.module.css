@@ -1,0 +1,27 @@
+.Container {
+  margin-bottom: 16px;
+}
+
+.TextField {
+  background-color: white;
+}
+
+.TextField .MuiOutlinedInput-root {
+  border-radius: 8px;
+}
+
+.TextField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #1976d2;
+}
+
+.TextField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #1976d2;
+  border-width: 2px;
+}
+
+.ErrorText {
+  margin-top: 4px;
+  margin-left: 14px;
+  font-size: 0.75rem;
+}
+

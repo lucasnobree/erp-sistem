@@ -1,0 +1,97 @@
+.Board {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.Header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 0 16px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.Title {
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+.AddButton {
+  background-color: #1976d2 !important;
+  color: white !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+}
+
+.Columns {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  flex: 1;
+  padding-bottom: 16px;
+}
+
+.EmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  border: 2px dashed #e0e0e0;
+  border-radius: 12px;
+  min-height: 300px;
+  width: 100%;
+}
+
+.ColorPicker {
+  margin-top: 16px;
+}
+
+.ColorOptions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ColorOption {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.ColorOption:hover {
+  transform: scale(1.1);
+}
+
+.ColorOption.Selected {
+  border-color: #333;
+  transform: scale(1.1);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .Header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .Columns {
+    gap: 12px;
+  }
+  
+  .EmptyState {
+    padding: 32px 16px;
+    min-height: 200px;
+  }
+}
+

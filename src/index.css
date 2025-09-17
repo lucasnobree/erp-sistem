@@ -1,0 +1,19 @@
+@font-face {
+  font-family: "NexaBold";
+  src: url("fonts/Nexa-Heavy.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nexa";
+  src: url("fonts/Nexa-ExtraLight.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: Nexa, sans-serif;
+}

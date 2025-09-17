@@ -1,0 +1,29 @@
+.General {
+  font-family: NexaBold, sans-serif;
+  display: flex;
+  padding: 5px;
+  background-color:#25232c;
+  border-color: aliceblue;
+  border-right: 1px solid #4a4658;
+}
+
+/* //#25232c
+//#4a4658 */
+.Icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;  
+  margin-left: 15px;
+  margin-top: 30px;
+  margin-bottom: 50px;
+  width: 50px;
+  height:50px;
+  background-color: #522da83a;
+}
+
+.Drawer {
+  background-color: #25232c;
+  max-width: 200px;
+  border-radius: 15px;
+  transform: scale(0.98);
+}
