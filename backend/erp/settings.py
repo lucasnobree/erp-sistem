@@ -157,6 +157,14 @@ SPECTACULAR_SETTINGS = {
             "name": "Clientes",
             "description": "CRUD de clientes, com busca, ordenação e filtro por status.",
         },
+        {
+            "name": "Kanban - Colunas",
+            "description": "CRUD de colunas do Kanban.",
+        },
+        {
+            "name": "Kanban - Cards",
+            "description": "CRUD de cards do Kanban, com filtro por coluna, status e prioridade.",
+        },
     ],
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
