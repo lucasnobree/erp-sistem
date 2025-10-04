@@ -18,7 +18,7 @@ export default function Clientes() {
 
     fetch("http://127.0.0.1:8000/api/clientes/", {
       headers: {
-        "Authorization": `Bearer ${token}`,
+        "Authorization": `${token}`,
         "Content-Type": "application/json",
       },
     })
@@ -75,7 +75,7 @@ export default function Clientes() {
       const authResponse = await fetch("http://127.0.0.1:8000/api/token/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "davy", password: "123" }),
+        body: JSON.stringify({ username: "admin", password: "admin123" }),
       });
 
       if (!authResponse.ok) throw new Error("Falha na autenticação");

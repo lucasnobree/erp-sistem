@@ -58,7 +58,7 @@ export default function Login() {
               <Typography variant="body2">ou use seu email e senha</Typography>
               <TextField
                 fullWidth
-                label="Email"
+                label="Usuário"
                 variant="outlined"
                 margin="normal"
                 className={styles.input}
@@ -105,7 +105,7 @@ export default function Login() {
               </Typography>
               <TextField
                 fullWidth
-                label="Nome"
+                label="Usuário"
                 variant="outlined"
                 margin="normal"
                 className={styles.input}
