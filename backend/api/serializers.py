@@ -33,11 +33,22 @@ class KanbanColumnSerializer(serializers.ModelSerializer):
 class KanbanCardSerializer(serializers.ModelSerializer):
     # Mapeamentos de nomes solicitados
     columnId = serializers.PrimaryKeyRelatedField(
-        source='column', queryset=KanbanColumn.objects.all()
+        source='column', 
+        queryset=KanbanColumn.objects.all(),
+        required=True
     )
-    dueDate = serializers.DateField(source='due_date', required=False, allow_null=True)
+    dueDate = serializers.DateField(
+        source='due_date', 
+        required=False, 
+        allow_null=True,
+        input_formats=['%Y-%m-%d', 'iso-8601'],
+        format=None
+    )
     assigne = serializers.PrimaryKeyRelatedField(
-        source='assignee', queryset=get_user_model().objects.all(), required=False, allow_null=True
+        source='assignee', 
+        queryset=get_user_model().objects.all(), 
+        required=False, 
+        allow_null=True
     )
 
     class Meta:
@@ -56,8 +67,38 @@ class KanbanCardSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+    def to_representation(self, instance):
+        # Garante que a resposta use os nomes dos campos corretos
+        representation = super().to_representation(instance)
+        # Adiciona o nome da coluna para facilitar o frontend
+        if instance.column:
+            representation['columnName'] = instance.column.name
+        # Adiciona o nome do responsável se existir
+        if instance.assignee:
+            representation['assigneName'] = instance.assignee.username
+        return representation
+
 
 User = get_user_model()
+
+
+class UserBasicSerializer(serializers.ModelSerializer):
+    """Serializer simples para dados públicos do usuário.
+
+    Usado como resposta no cadastro (register).
+    """
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
+
+
+class UserMeSerializer(serializers.ModelSerializer):
+    """Serializer para o endpoint /api/me/."""
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "is_staff", "is_superuser"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
