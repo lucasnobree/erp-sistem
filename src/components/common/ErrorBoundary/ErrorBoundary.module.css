@@ -1,0 +1,107 @@
+.Container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 20px;
+}
+
+.ErrorPaper {
+  max-width: 600px;
+  width: 100%;
+  padding: 40px;
+  text-align: center;
+}
+
+.ErrorContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.ErrorIcon {
+  font-size: 64px !important;
+  color: #f44336;
+}
+
+.ErrorTitle {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.ErrorMessage {
+  color: #666;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.ErrorDetails {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: left;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ErrorDetailsTitle {
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.ErrorDetailsText {
+  color: #666;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ErrorActions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.RetryButton {
+  background-color: #1976d2;
+  color: white;
+}
+
+.RetryButton:hover {
+  background-color: #1565c0;
+}
+
+.ReloadButton {
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
+.ReloadButton:hover {
+  background-color: rgba(25, 118, 210, 0.04);
+  border-color: #1565c0;
+}
+
+@media (max-width: 600px) {
+  .ErrorPaper {
+    padding: 20px;
+  }
+  
+  .ErrorActions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .RetryButton,
+  .ReloadButton {
+    width: 100%;
+    max-width: 200px;
+  }
+}

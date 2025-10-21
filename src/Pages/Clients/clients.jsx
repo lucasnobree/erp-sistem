@@ -1,42 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Chip } from "@mui/material";
 import { PageHeader } from "../../components/common/PageHeader/PageHeader";
 import { CustomTable } from "../../components/common/CustomTable/CustomTable";
 import { ClientForm } from "../../components/forms/ClientForm/ClientForm";
+import { Loading } from "../../components/common/Loading/Loading";
+import { useClients } from "../../shared/hooks";
+import { useNotification } from "../../components/common/Notification/Notification";
 import styles from "./clients.module.css";
 
 export default function Clientes() {
   const [selectedRows, setSelectedRows] = useState([]);
-  const [clientsData, setClientsData] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-
-  // Buscar clientes na API quando o componente carregar
-  useEffect(() => {
-    const token = localStorage.getItem("access");
-
-    if (!token) return; // se não tiver token, não tenta buscar
-
-    fetch("http://127.0.0.1:8000/api/clientes/", {
-      headers: {
-        "Authorization": `${token}`,
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setClientsData(data);
-        } else {
-          console.error("Resposta inesperada:", data);
-          setClientsData([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar clientes:", err);
-        setClientsData([]);
-      });
-  }, []);
-
+  
+  const { 
+    data: clientsData, 
+    loading, 
+    error, 
+    create, 
+    refetch 
+  } = useClients();
+  
+  const { showSuccess, showError } = useNotification();
 
   // Configuração das colunas da tabela
   const columns = [
@@ -51,13 +35,13 @@ export default function Clientes() {
       render: (value) => (
         <Chip
           label={value}
-          color={value === "Ativo" ? "success" : "default"}
+          color={value === "ATIVO" ? "success" : "default"}
           size="small"
         />
       )
     },
     {
-      id: "dataUltimoContato",
+      id: "ultimo_contato",
       label: "Último Contato",
       align: "center",
       render: (value) =>
@@ -70,64 +54,43 @@ export default function Clientes() {
   };
 
   const handleSubmitClient = async (newClient) => {
-    try {
-      // login
-      const authResponse = await fetch("http://127.0.0.1:8000/api/token/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "admin", password: "admin123" }),
-      });
+    const payload = {
+      nome: newClient.nome,
+      email: newClient.email,
+      telefone: newClient.telefone,
+      empresa: newClient.empresa,
+      status: newClient.status.toUpperCase(),
+      ultimo_contato: new Date(newClient.dataUltimoContato).toISOString(),
+    };
 
-      if (!authResponse.ok) throw new Error("Falha na autenticação");
-
-      const { access } = await authResponse.json();
-      localStorage.setItem("access", access);
-
-      // cria cliente
-      const payload = {
-        nome: newClient.nome,
-        email: newClient.email,
-        telefone: newClient.telefone,
-        empresa: newClient.empresa,
-        status: newClient.status.toUpperCase(),
-        ultimo_contato: new Date(newClient.dataUltimoContato).toISOString(),
-      };
-
-      const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${access}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
-      }
-
-      // ✅ em vez de adicionar só o cliente criado, recarregue toda a lista
-      const clientsResponse = await fetch("http://127.0.0.1:8000/api/clientes/", {
-        headers: {
-          "Authorization": `Bearer ${access}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const allClients = await clientsResponse.json();
-      setClientsData(allClients);
-
+    const result = await create(payload);
+    
+    if (result.success) {
+      showSuccess("Cliente criado com sucesso!");
       setIsFormOpen(false);
-
-    } catch (err) {
-      console.error("Erro completo:", err);
-      alert(`Erro: ${err.message}`);
+    } else {
+      showError(result.error || "Erro ao criar cliente");
     }
   };
 
+  if (loading && !clientsData) {
+    return <Loading fullScreen message="Carregando clientes..." />;
+  }
 
-
+  if (error) {
+    return (
+      <Box className={styles.Container}>
+        <PageHeader
+          title="Clientes"
+          subtitle="Erro ao carregar dados"
+        />
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <p>Erro: {error}</p>
+          <button onClick={refetch}>Tentar novamente</button>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box className={styles.Container}>
@@ -140,7 +103,7 @@ export default function Clientes() {
 
       <CustomTable
         columns={columns}
-        data={clientsData}
+        data={clientsData || []}
         selectable={true}
         selectedRows={selectedRows}
         onSelectionChange={setSelectedRows}
