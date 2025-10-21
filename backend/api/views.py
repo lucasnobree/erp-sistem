@@ -3,22 +3,29 @@ from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiTypes
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 from .models import Client, KanbanColumn, KanbanCard
 from .serializers import (
     ClientSerializer,
     KanbanColumnSerializer,
     KanbanCardSerializer,
     RegisterSerializer,
+    UserBasicSerializer,
+    UserMeSerializer,
 )
 
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    # Define um serializer para o drf-spectacular reconhecer o schema
+    serializer_class = UserMeSerializer
+
     @extend_schema(
-        tags=['Autenticação'],
+        tags=['Authentication'],
         summary='Dados do usuário autenticado',
-        description='Retorna informações básicas do usuário logado.'
+        description='Retorna informações básicas do usuário logado.',
+        responses=UserMeSerializer,
     )
     def get(self, request):
         user = request.user
@@ -35,21 +42,22 @@ class MeView(APIView):
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
+    # Define serializers para documentação
+    serializer_class = RegisterSerializer
+
     @extend_schema(
-        tags=['Autenticação'],
+        tags=['Authentication'],
         summary='Registrar novo usuário',
-        description='Cria um novo usuário com username, email (opcional) e password.'
+        description='Cria um novo usuário com username, email (opcional) e password.',
+        request=RegisterSerializer,
+        responses={201: UserBasicSerializer},
     )
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return Response(
-            {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-            },
+            UserBasicSerializer(user).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -106,6 +114,35 @@ class ClientViewSet(viewsets.ModelViewSet):
         if status_value in {Client.STATUS_ATIVO, Client.STATUS_INATIVO}:
             qs = qs.filter(status=status_value)
         return qs
+
+
+# --- JWT wrappers apenas para documentação e agrupamento ---
+
+@extend_schema(
+    tags=['Authentication'],
+    summary='Obter token JWT (Par de tokens)',
+    description='Retorna tokens de acesso e refresh a partir de credenciais válidas.'
+)
+class JWTObtainPairView(TokenObtainPairView):
+    pass
+
+
+@extend_schema(
+    tags=['Authentication'],
+    summary='Atualizar token JWT',
+    description='Gera um novo token de acesso a partir de um token de refresh válido.'
+)
+class JWTRefreshView(TokenRefreshView):
+    pass
+
+
+@extend_schema(
+    tags=['Authentication'],
+    summary='Verificar token JWT',
+    description='Verifica se um token JWT é válido.'
+)
+class JWTVerifyView(TokenVerifyView):
+    pass
 
 
 @extend_schema_view(

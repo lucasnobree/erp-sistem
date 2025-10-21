@@ -150,10 +150,6 @@ SPECTACULAR_SETTINGS = {
     "SORT_TAGS": True,
     "TAGS": [
         {
-            "name": "Autenticação",
-            "description": "Endpoints de autenticação via JWT (obter, refresh e verificar tokens).",
-        },
-        {
             "name": "Clientes",
             "description": "CRUD de clientes, com busca, ordenação e filtro por status.",
         },
