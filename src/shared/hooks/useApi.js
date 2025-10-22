@@ -18,7 +18,8 @@ export function useApi(endpoint, options = {}) {
       const result = await response.json();
       
       if (response.ok) {
-        setData(result);
+        const payload = Array.isArray(result) ? result : (Array.isArray(result?.results) ? result.results : result);
+        setData(payload);
       } else {
         setError(result.detail || 'Erro ao carregar dados');
       }
@@ -59,7 +60,8 @@ export function useCrud(resource, options = {}) {
       const result = await response.json();
       
       if (response.ok) {
-        setData(Array.isArray(result) ? result : [result]);
+        const payload = Array.isArray(result) ? result : (Array.isArray(result?.results) ? result.results : [result]);
+        setData(payload);
       } else {
         setError(result.detail || 'Erro ao carregar dados');
       }

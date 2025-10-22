@@ -39,7 +39,10 @@ export function KanbanBoard({
   onCardAdd,
   onCardEdit,
   onCardDelete,
-  onCardMove
+  onCardMove,
+  showHeader = true,
+  showAddColumnButton = true,
+  showEmptyState = true,
 }) {
   const [showColumnDialog, setShowColumnDialog] = useState(false);
   const [editingColumn, setEditingColumn] = useState(null);
@@ -111,19 +114,23 @@ export function KanbanBoard({
 
   return (
     <Box className={styles.Board}>
-      <Box className={styles.Header}>
-        <Typography variant="h6" className={styles.Title}>
-          Quadro Kanban
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleAddColumn}
-          className={styles.AddButton}
-        >
-          Nova Coluna
-        </Button>
-      </Box>
+      {showHeader && (
+        <Box className={styles.Header}>
+          <Typography variant="h6" className={styles.Title}>
+            Quadro Kanban
+          </Typography>
+          {showAddColumnButton && (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddColumn}
+              className={styles.AddButton}
+            >
+              Nova Coluna
+            </Button>
+          )}
+        </Box>
+      )}
 
       <Box className={styles.Columns}>
         {columns.map((column) => (
@@ -142,7 +149,7 @@ export function KanbanBoard({
           />
         ))}
 
-        {columns.length === 0 && (
+        {showEmptyState && columns.length === 0 && (
           <Paper className={styles.EmptyState}>
             <Typography variant="h6" color="textSecondary">
               Nenhuma coluna criada
