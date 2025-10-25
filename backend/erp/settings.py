@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
-    "drf_spectacular_sidecar",
     "corsheaders",  # ADICIONADO: django-cors-headers
     # Local apps
     "api",
@@ -141,26 +140,19 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SERVE_PUBLIC": True,
-    "SWAGGER_UI_DIST": "SIDECAR",
-    "REDOC_DIST": "SIDECAR",
     "SECURITY": [
         {"bearerAuth": []},
     ],
     "SORT_OPERATIONS": True,
     "SORT_TAGS": True,
     "TAGS": [
-        {
-            "name": "Clientes",
-            "description": "CRUD de clientes, com busca, ordenação e filtro por status.",
-        },
-        {
-            "name": "Kanban - Colunas",
-            "description": "CRUD de colunas do Kanban.",
-        },
-        {
-            "name": "Kanban - Cards",
-            "description": "CRUD de cards do Kanban, com filtro por coluna, status e prioridade.",
-        },
+        {"name": "Autenticação", "description": "Login, registro e tokens JWT"},
+        {"name": "Usuários", "description": "Listagem de usuários"},
+        {"name": "Clientes", "description": "Gerenciamento de clientes"},
+        {"name": "Kanban", "description": "Quadros Kanban"},
+        {"name": "Compartilhamento", "description": "Compartilhamento de Kanbans"},
+        {"name": "Colunas", "description": "Colunas do Kanban"},
+        {"name": "Cards", "description": "Cards do Kanban"},
     ],
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,

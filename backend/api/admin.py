@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client, KanbanColumn, KanbanCard
+from .models import Client, Kanban, KanbanShare, KanbanColumn, KanbanCard
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
@@ -17,17 +17,51 @@ class ClientAdmin(admin.ModelAdmin):
     ordering = ('-id',)
 
 
+@admin.register(Kanban)
+class KanbanAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'nome',
+        'cliente',
+        'owner',
+        'created_at',
+        'updated_at',
+    )
+    list_filter = ('owner', 'cliente', 'created_at')
+    search_fields = ('nome', 'descricao', 'owner__username', 'cliente__nome', 'cliente__empresa')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ['cliente']
+
+
+@admin.register(KanbanShare)
+class KanbanShareAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'kanban',
+        'usuario',
+        'pode_editar',
+        'shared_at',
+    )
+    list_filter = ('pode_editar', 'shared_at')
+    search_fields = ('kanban__nome', 'usuario__username')
+    ordering = ('-shared_at',)
+    readonly_fields = ('shared_at',)
+
+
 @admin.register(KanbanColumn)
 class KanbanColumnAdmin(admin.ModelAdmin):
     list_display = (
         'id',
+        'kanban',
         'name',
         'color',
         'order',
     )
     list_editable = ('order',)
-    search_fields = ('name', 'color')
-    ordering = ('order', 'id')
+    list_filter = ('kanban',)
+    search_fields = ('name', 'color', 'kanban__nome')
+    ordering = ('kanban', 'order', 'id')
 
 
 @admin.register(KanbanCard)

@@ -27,31 +27,92 @@ class Client(models.Model):
         return self.nome
 
 
+class Kanban(models.Model):
+    """Quadro Kanban com suporte a compartilhamento e vinculação de clientes."""
+    
+    nome = models.CharField(max_length=255)
+    descricao = models.TextField(blank=True, null=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="kanbans_owned",
+        verbose_name="Proprietário"
+    )
+    cliente = models.ForeignKey(
+        'Client',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="kanbans",
+        verbose_name="Cliente",
+        help_text="Cliente associado a este Kanban (opcional)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Kanban"
+        verbose_name_plural = "Kanbans"
+    
+    def __str__(self) -> str:
+        if self.cliente:
+            return f"{self.nome} - Cliente: {self.cliente.nome} (Owner: {self.owner.username})"
+        return f"{self.nome} (Owner: {self.owner.username})"
+
+
+class KanbanShare(models.Model):
+    """Compartilhamento de Kanban entre usuários."""
+    
+    kanban = models.ForeignKey(
+        Kanban,
+        on_delete=models.CASCADE,
+        related_name="shares"
+    )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="kanbans_shared"
+    )
+    pode_editar = models.BooleanField(
+        default=False,
+        help_text="Se True, o usuário pode editar o Kanban. Se False, apenas visualizar."
+    )
+    shared_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = [("kanban", "usuario")]
+        ordering = ["-shared_at"]
+        verbose_name = "Compartilhamento de Kanban"
+        verbose_name_plural = "Compartilhamentos de Kanban"
+    
+    def __str__(self) -> str:
+        return f"{self.kanban.nome} -> {self.usuario.username}"
+
+
 class KanbanColumn(models.Model):
-    """Coluna do Kanban.
+    """Coluna do Kanban."""
 
-    Campos solicitados:
-    - color (cor)
-    - id (auto)
-    - name (nome)
-    - order (ordem)
-    """
-
+    kanban = models.ForeignKey(
+        Kanban,
+        on_delete=models.CASCADE,
+        related_name="columns"
+    )
     name = models.CharField(max_length=100)
     color = models.CharField(max_length=20, help_text="Cor em HEX (ex: #FF0000) ou nome da cor")
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ["order", "id"]
+        ordering = ["kanban", "order", "id"]
         verbose_name = "Coluna do Kanban"
         verbose_name_plural = "Colunas do Kanban"
 
     def __str__(self) -> str:
-        return f"{self.order} - {self.name}"
+        return f"[{self.kanban.nome}] {self.order} - {self.name}"
 
 
 class KanbanCard(models.Model):
-    """Card pertencente a uma coluna do Kanban"""
+    """Card do Kanban."""
 
     column = models.ForeignKey(
         KanbanColumn,
