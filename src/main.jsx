@@ -11,7 +11,6 @@ import { LoginPage } from "./features/auth";
 import Dashboard from "./Pages/Dashboard/dashboard.jsx";
 import Clientes from "./Pages/Clients/clients.jsx";
 import Eventos from "./Pages/Events/events.jsx";
-import Kanban from "./Pages/Kanban/kanban.jsx";
 
 const router = createBrowserRouter([
   {
@@ -57,20 +56,6 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <Eventos />,
-      },
-    ],
-  },
-  {
-    path: "/kanban",
-    element: (
-      <ProtectedRoute>
-        <MainLayout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <Kanban />,
       },
     ],
   },

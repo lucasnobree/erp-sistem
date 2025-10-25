@@ -1,13 +1,12 @@
 import List from "@mui/material/List";
 import styles from "./NMenu.module.css";
 import { NItemMenu } from "../NItemMenu/NItemMenu";
-import { AutoAwesomeMotion, CalendarToday, Dashboard, Group, ViewKanban } from "@mui/icons-material";
+import { AutoAwesomeMotion, CalendarToday, Dashboard } from "@mui/icons-material";
 
 const menuItems = [
   { id: "dashboard", icon: <Dashboard />, name: "Dashboards", route: "/dashboard" },
   { id: "clients", icon: <AutoAwesomeMotion />, name: "Clientes", route: "/clients" },
   { id: "events", icon: <CalendarToday />, name: "Atividades", route: "/events" },
-  { id: "kanban", icon: <ViewKanban />, name: "Kanban", route: "/kanban" },
   // { id: "team", icon: <Group />, name: "Grupo", route: "/group" },
 ];
 
