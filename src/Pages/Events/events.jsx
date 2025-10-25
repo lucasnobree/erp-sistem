@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Grid, Paper, Skeleton } from "@mui/material";
 import { PageHeader } from "../../components/common/PageHeader/PageHeader";
 import styles from "./events.module.css";
 import { KanbanBoard } from "../../components/kanban/KanbanBoard/KanbanBoard";
@@ -8,8 +8,8 @@ import { Loading } from "../../components/common/Loading/Loading";
 import { useNotification } from "../../components/common/Notification/Notification";
 
 export default function Eventos() {
-  const { data: columns, loading: colsLoading, error: colsError, create: createColumn, update: updateColumn, remove: deleteColumn, refetch: refetchColumns, fetchData: fetchColumns } = useKanbanColumns();
-  const { data: cards, loading: cardsLoading, error: cardsError, create: createCard, update: updateCard, partialUpdate: partialUpdateCard, remove: deleteCard, refetch: refetchCards, fetchData: fetchCards } = useKanbanCards();
+  const { data: columns, loading: colsLoading, error: colsError, operationLoading: colsOpLoading, create: createColumn, update: updateColumn, remove: deleteColumn, refetch: refetchColumns, fetchData: fetchColumns } = useKanbanColumns();
+  const { data: cards, loading: cardsLoading, error: cardsError, operationLoading: cardsOpLoading, create: createCard, update: updateCard, partialUpdate: partialUpdateCard, remove: deleteCard, refetch: refetchCards, fetchData: fetchCards } = useKanbanCards();
   const { showSuccess, showError } = useNotification();
 
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
@@ -47,7 +47,6 @@ export default function Eventos() {
   useEffect(() => {
     fetchColumns();
     fetchCards();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAddColumnFromBoard = async (columnData) => {
@@ -59,7 +58,6 @@ export default function Eventos() {
     const res = await createColumn(payload);
     if (res.success) {
       showSuccess("Coluna criada com sucesso");
-      refetchColumns();
     } else {
       showError(res.error || "Erro ao criar coluna");
     }
@@ -73,7 +71,6 @@ export default function Eventos() {
       setIsAddColumnOpen(false);
       setNewColumnName("");
       setNewColumnColor("#1976d2");
-      refetchColumns();
     } else {
       showError(res.error || "Erro ao criar coluna");
     }
@@ -97,7 +94,6 @@ export default function Eventos() {
       setNewCardTitle("");
       setNewCardDescription("");
       setActiveColumnId(null);
-      refetchCards();
     } else {
       showError(res.error || "Erro ao criar card");
     }
@@ -122,7 +118,6 @@ export default function Eventos() {
       setNewCardTitle("");
       setNewCardDescription("");
       setActiveColumnId(null);
-      refetchCards();
     } else {
       showError(res.error || "Erro ao atualizar card");
     }
@@ -132,14 +127,43 @@ export default function Eventos() {
     const res = await deleteCard(cardId);
     if (res.success) {
       showSuccess("Card excluído com sucesso");
-      refetchCards();
     } else {
       showError(res.error || "Erro ao excluir card");
     }
   };
 
-  if (colsLoading || cardsLoading) {
-    return <Loading fullScreen message="Carregando Kanban..." />;
+  const isCrudOperating = colsOpLoading || cardsOpLoading;
+  const isFetchingLists = (colsLoading || cardsLoading) && !isCrudOperating;
+
+  if (isFetchingLists) {
+    return (
+      <Box className={styles.Container}>
+        <PageHeader
+          title="Quadro de Atividades"
+          subtitle="Organize suas atividades"
+          onAdd={() => setIsAddColumnOpen(true)}
+          addButtonText="Nova Coluna"
+        />
+        <Grid container spacing={2} className={styles.Board}>
+          {[1, 2, 3, 4].map((i) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={i}>
+              <Paper className={styles.Column} elevation={2} sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Skeleton variant="circular" width={12} height={12} />
+                  <Skeleton variant="text" width="60%" height={24} />
+                  <Skeleton variant="text" width={24} height={20} sx={{ ml: 'auto' }} />
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Skeleton variant="rectangular" height={64} />
+                  <Skeleton variant="rectangular" height={64} />
+                  <Skeleton variant="rectangular" height={64} />
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
   }
 
   if (colsError || cardsError) {
@@ -171,7 +195,6 @@ export default function Eventos() {
           const res = await updateColumn(columnData.id, payload);
           if (res.success) {
             showSuccess("Coluna atualizada com sucesso");
-            refetchColumns();
           } else {
             showError(res.error || "Erro ao atualizar coluna");
           }
@@ -180,8 +203,6 @@ export default function Eventos() {
           const res = await deleteColumn(columnId);
           if (res.success) {
             showSuccess("Coluna excluída com sucesso");
-            refetchColumns();
-            refetchCards();
           } else {
             showError(res.error || "Erro ao excluir coluna");
           }
@@ -192,7 +213,6 @@ export default function Eventos() {
           const res = await partialUpdateCard(cardId, { columnId: newColumnId });
           if (res.success) {
             showSuccess("Card movido");
-            refetchCards();
           } else {
             showError(res.error || "Erro ao mover card");
           }
