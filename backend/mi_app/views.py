@@ -9,16 +9,24 @@ from django.db import transaction
 from django.http import JsonResponse
 from datetime import datetime
 from .serializers import (
-    UsuarioSerializer, 
-    CustomTokenObtainPairSerializer, 
+    UsuarioSerializer,
+    CustomTokenObtainPairSerializer,
     ClienteSerializer,
     ProdutoSerializer,
     CategoriaSerializer,
     VentaSerializer,
     VentaItemSerializer,
-    CarritoSerializer
+    CarritoSerializer,
+    KanbanSerializer,
+    KanbanCompletoSerializer,
+    ColunaSerializer,
+    CardSerializer,
+    RegraAutomacaoSerializer,
+    HistoricoMovimentacaoSerializer,
+    LogNotificacaoSerializer
 )
 from .models import Cliente, Produto, Categoria, Venta, VentaItem, Carrito
+from .models_kanban import Kanban, Coluna, Card, RegraAutomacao, HistoricoMovimentacao, LogNotificacao
 
 Usuario = get_user_model()
 
@@ -705,3 +713,376 @@ def api_welcome(request):
     }
     
     return JsonResponse(welcome_data, json_dumps_params={'indent': 2})
+
+
+# ============================================================================
+# KANBAN VIEWSETS
+# ============================================================================
+
+class KanbanViewSet(viewsets.ModelViewSet):
+    """ViewSet para Quadros Kanban"""
+    queryset = Kanban.objects.all()
+    serializer_class = KanbanSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Retornar apenas quadros do usuário logado"""
+        return Kanban.objects.filter(criado_por=self.request.user).order_by('-data_criacao')
+
+    def perform_create(self, serializer):
+        """Criar quadro com o usuário atual como criador"""
+        serializer.save(criado_por=self.request.user)
+
+    @action(detail=True, methods=['get'])
+    def completo(self, request, pk=None):
+        """Retornar quadro completo com colunas e cards"""
+        kanban = self.get_object()
+        serializer = KanbanCompletoSerializer(kanban)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def regras(self, request, pk=None):
+        """Listar regras de automação do quadro"""
+        kanban = self.get_object()
+        regras = RegraAutomacao.objects.filter(kanban=kanban, ativo=True)
+        serializer = RegraAutomacaoSerializer(regras, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def criar_regra(self, request, pk=None):
+        """Criar regra de automação para o quadro"""
+        kanban = self.get_object()
+        data = request.data.copy()
+        data['kanban'] = kanban.id
+        serializer = RegraAutomacaoSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ColunaViewSet(viewsets.ModelViewSet):
+    """ViewSet para Colunas do Kanban"""
+    queryset = Coluna.objects.all()
+    serializer_class = ColunaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtrar colunas por quadro se fornecido"""
+        queryset = Coluna.objects.all().order_by('ordem')
+        kanban_id = self.request.query_params.get('kanban', None)
+        if kanban_id:
+            queryset = queryset.filter(kanban_id=kanban_id)
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Override create to handle ordem before validation"""
+        # Get kanban_id from request data
+        kanban_id = request.data.get('kanban')
+        if not kanban_id:
+            return Response(
+                {'detail': 'kanban é obrigatório'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            kanban = Kanban.objects.get(id=kanban_id)
+            # Verificar permissão
+            if kanban.criado_por != request.user:
+                raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+
+            # Auto-incrementar ordem
+            ultima_coluna = Coluna.objects.filter(kanban=kanban).order_by('-ordem').first()
+            ordem = (ultima_coluna.ordem + 1) if ultima_coluna else 0
+
+            # Create data with ordem
+            data = request.data.copy()
+            data['ordem'] = ordem
+
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except Kanban.DoesNotExist:
+            return Response(
+                {'detail': 'Kanban não encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def perform_create(self, serializer):
+        """Just save - ordem is already set in create()"""
+        serializer.save()
+
+    def perform_update(self, serializer):
+        """Validar permissão antes de atualizar"""
+        kanban = serializer.instance.kanban
+        if kanban.criado_por != self.request.user:
+            raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Validar permissão antes de deletar"""
+        if instance.kanban.criado_por != self.request.user:
+            raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+        instance.delete()
+
+    @action(detail=False, methods=['post'])
+    def reordenar(self, request):
+        """Reordenar colunas"""
+        colunas_ordem = request.data.get('colunas', [])  # [{'id': 1, 'ordem': 0}, ...]
+
+        try:
+            with transaction.atomic():
+                for item in colunas_ordem:
+                    coluna = Coluna.objects.get(id=item['id'])
+                    # Verificar permissão
+                    if coluna.kanban.criado_por != request.user:
+                        raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+                    coluna.ordem = item['ordem']
+                    coluna.save()
+
+                return Response({'detail': 'Colunas reordenadas com sucesso'})
+        except Coluna.DoesNotExist:
+            return Response(
+                {'detail': 'Coluna não encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class CardViewSet(viewsets.ModelViewSet):
+    """ViewSet para Cards do Kanban"""
+    queryset = Card.objects.all()
+    serializer_class = CardSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtrar cards por coluna ou kanban"""
+        queryset = Card.objects.all().order_by('ordem', '-data_criacao')
+
+        coluna_id = self.request.query_params.get('coluna', None)
+        if coluna_id:
+            queryset = queryset.filter(coluna_id=coluna_id)
+
+        kanban_id = self.request.query_params.get('kanban', None)
+        if kanban_id:
+            queryset = queryset.filter(coluna__kanban_id=kanban_id)
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Override create to handle ordem before validation"""
+        coluna_id = request.data.get('coluna')
+        if not coluna_id:
+            return Response(
+                {'detail': 'coluna é obrigatória'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            coluna = Coluna.objects.get(id=coluna_id)
+            # Verificar permissão
+            if coluna.kanban.criado_por != request.user:
+                raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+
+            # Verificar limite de cards
+            if not coluna.pode_adicionar_card():
+                return Response(
+                    {'detail': f'A coluna atingiu o limite de {coluna.limite_cards} cards'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Auto-incrementar ordem
+            ultimo_card = Card.objects.filter(coluna=coluna).order_by('-ordem').first()
+            ordem = (ultimo_card.ordem + 1) if ultimo_card else 0
+
+            # Create data with ordem
+            data = request.data.copy()
+            data['ordem'] = ordem
+
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except Coluna.DoesNotExist:
+            return Response(
+                {'detail': 'Coluna não encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def perform_create(self, serializer):
+        """Just save - ordem is already set in create()"""
+        serializer.save()
+
+    def perform_update(self, serializer):
+        """Validar permissão antes de atualizar"""
+        kanban = serializer.instance.coluna.kanban
+        if kanban.criado_por != self.request.user:
+            raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Validar permissão antes de deletar"""
+        if instance.coluna.kanban.criado_por != self.request.user:
+            raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+        instance.delete()
+
+    @action(detail=True, methods=['post'])
+    def mover(self, request, pk=None):
+        """Mover card entre colunas"""
+        card = self.get_object()
+        coluna_destino_id = request.data.get('coluna_destino')
+        nova_ordem = request.data.get('ordem', 0)
+
+        try:
+            with transaction.atomic():
+                # Verificar permissão
+                if card.coluna.kanban.criado_por != request.user:
+                    raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+
+                coluna_origem = card.coluna
+                coluna_destino = Coluna.objects.get(id=coluna_destino_id)
+
+                # Verificar se as colunas são do mesmo quadro
+                if coluna_origem.kanban != coluna_destino.kanban:
+                    return Response(
+                        {'detail': 'As colunas devem pertencer ao mesmo quadro'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Verificar limite da coluna destino (se for diferente)
+                if coluna_origem != coluna_destino:
+                    if not coluna_destino.pode_adicionar_card():
+                        return Response(
+                            {'detail': f'A coluna destino atingiu o limite de {coluna_destino.limite_cards} cards'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                # Registrar histórico
+                HistoricoMovimentacao.objects.create(
+                    card=card,
+                    coluna_origem=coluna_origem,
+                    coluna_destino=coluna_destino,
+                    usuario=request.user,
+                    observacao=request.data.get('observacao', '')
+                )
+
+                # Atualizar card
+                card.coluna = coluna_destino
+                card.ordem = nova_ordem
+                card.data_movimentacao = datetime.now()
+                card.save()
+
+                serializer = CardSerializer(card)
+                return Response(serializer.data)
+
+        except Coluna.DoesNotExist:
+            return Response(
+                {'detail': 'Coluna destino não encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['get'])
+    def historico(self, request, pk=None):
+        """Obter histórico de movimentações do card"""
+        card = self.get_object()
+        historico = HistoricoMovimentacao.objects.filter(card=card).order_by('-data')
+        serializer = HistoricoMovimentacaoSerializer(historico, many=True)
+        return Response(serializer.data)
+
+
+class RegraAutomacaoViewSet(viewsets.ModelViewSet):
+    """ViewSet para Regras de Automação"""
+    queryset = RegraAutomacao.objects.all()
+    serializer_class = RegraAutomacaoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtrar regras por quadro"""
+        queryset = RegraAutomacao.objects.all()
+        kanban_id = self.request.query_params.get('kanban', None)
+        if kanban_id:
+            queryset = queryset.filter(kanban_id=kanban_id)
+        return queryset.order_by('nome')
+
+    def perform_create(self, serializer):
+        """Validar permissão antes de criar"""
+        kanban = serializer.validated_data['kanban']
+        if kanban.criado_por != self.request.user:
+            raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+        serializer.save()
+
+    def perform_update(self, serializer):
+        """Validar permissão antes de atualizar"""
+        if serializer.instance.kanban.criado_por != self.request.user:
+            raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Validar permissão antes de deletar"""
+        if instance.kanban.criado_por != self.request.user:
+            raise permissions.PermissionDenied("Você não tem permissão para modificar este quadro")
+        instance.delete()
+
+
+class HistoricoMovimentacaoViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet para Histórico de Movimentações (apenas leitura)"""
+    queryset = HistoricoMovimentacao.objects.all()
+    serializer_class = HistoricoMovimentacaoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtrar histórico por card ou kanban"""
+        queryset = HistoricoMovimentacao.objects.all().order_by('-data')
+
+        card_id = self.request.query_params.get('card', None)
+        if card_id:
+            queryset = queryset.filter(card_id=card_id)
+
+        kanban_id = self.request.query_params.get('kanban', None)
+        if kanban_id:
+            queryset = queryset.filter(card__coluna__kanban_id=kanban_id)
+
+        return queryset
+
+
+class LogNotificacaoViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet para Log de Notificações (apenas leitura)"""
+    queryset = LogNotificacao.objects.all()
+    serializer_class = LogNotificacaoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtrar logs por card, regra ou kanban"""
+        queryset = LogNotificacao.objects.all().order_by('-data_envio')
+
+        card_id = self.request.query_params.get('card', None)
+        if card_id:
+            queryset = queryset.filter(card_id=card_id)
+
+        regra_id = self.request.query_params.get('regra', None)
+        if regra_id:
+            queryset = queryset.filter(regra_id=regra_id)
+
+        kanban_id = self.request.query_params.get('kanban', None)
+        if kanban_id:
+            queryset = queryset.filter(card__coluna__kanban_id=kanban_id)
+
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        return queryset

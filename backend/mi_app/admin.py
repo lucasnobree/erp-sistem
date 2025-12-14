@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Usuario, Cliente, Categoria, Produto, Venta, VentaItem, Carrito
+from .models_kanban import Kanban, Coluna, Card, RegraAutomacao, HistoricoMovimentacao, LogNotificacao
 
 # Registrar modelos no admin do Django
 @admin.register(Usuario)
@@ -47,3 +48,54 @@ class CarritoAdmin(admin.ModelAdmin):
     list_filter = ('created_at',)
     search_fields = ('session_id',)
     readonly_fields = ('created_at', 'updated_at')
+
+
+# Kanban System Admin
+@admin.register(Kanban)
+class KanbanAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nome', 'criado_por', 'ativo', 'data_criacao')
+    list_filter = ('ativo', 'data_criacao')
+    search_fields = ('nome', 'descricao')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(Coluna)
+class ColunaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nome', 'kanban', 'ordem', 'cor', 'limite_cards')
+    list_filter = ('kanban',)
+    search_fields = ('nome',)
+    ordering = ('kanban', 'ordem')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(Card)
+class CardAdmin(admin.ModelAdmin):
+    list_display = ('id', 'titulo', 'coluna', 'cliente', 'responsavel', 'prioridade', 'data_vencimento', 'ordem')
+    list_filter = ('prioridade', 'data_vencimento', 'coluna__kanban')
+    search_fields = ('titulo', 'descricao')
+    ordering = ('coluna', 'ordem')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(RegraAutomacao)
+class RegraAutomacaoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nome', 'kanban', 'tipo_trigger', 'acao_whatsapp', 'ativo')
+    list_filter = ('tipo_trigger', 'acao_whatsapp', 'ativo', 'kanban')
+    search_fields = ('nome', 'template_mensagem')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(HistoricoMovimentacao)
+class HistoricoMovimentacaoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'card', 'coluna_origem', 'coluna_destino', 'usuario', 'data')
+    list_filter = ('data', 'coluna_destino')
+    search_fields = ('card__titulo', 'observacao')
+    ordering = ('-data',)
+
+
+@admin.register(LogNotificacao)
+class LogNotificacaoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'card', 'destinatario', 'status', 'data_envio', 'tentativas')
+    list_filter = ('status', 'data_envio')
+    search_fields = ('destinatario', 'mensagem')
+    ordering = ('-data_envio',)

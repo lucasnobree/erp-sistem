@@ -42,6 +42,19 @@ class Cliente(models.Model):
     email = models.EmailField(unique=True)
     telefone = models.CharField(max_length=20, null=True, blank=True)
     cidade = models.CharField(max_length=50, null=True, blank=True)
+
+    # Novos campos adicionados
+    empresa = models.CharField(max_length=200, null=True, blank=True, verbose_name="Empresa")
+    cnpj = models.CharField(max_length=18, null=True, blank=True, verbose_name="CNPJ")
+    data_bloqueio = models.DateField(null=True, blank=True, verbose_name="Data Bloqueio")
+    vencimento = models.DateField(null=True, blank=True, verbose_name="Vencimento")
+    reuniao_apresentacao_agendada = models.DateTimeField(null=True, blank=True, verbose_name="Reunião Apresentação Agendada")
+    relatorio_gerado = models.BooleanField(default=False, verbose_name="Relatório Gerado")
+    data_apresentacao_relatorio = models.DateField(null=True, blank=True, verbose_name="Data Apresentação Relatório")
+    contato = models.CharField(max_length=150, null=True, blank=True, verbose_name="Contato")
+    parceiro = models.CharField(max_length=150, null=True, blank=True, verbose_name="Parceiro")
+    observacoes = models.TextField(null=True, blank=True, verbose_name="Observações")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

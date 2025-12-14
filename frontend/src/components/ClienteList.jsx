@@ -174,30 +174,129 @@ const ClienteList = () => {
                   ✕
                 </button>
               </div>
-              <div className="grid grid-cols-1 gap-4">
-                <div className="border-b pb-3">
-                  <p className="text-sm font-medium text-gray-500 mb-1">CPF/CNPJ</p>
-                  <p className="text-gray-900 font-semibold">{viewingCliente.cedula}</p>
+              <div className="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto">
+                {/* Informações Básicas */}
+                <div className="bg-gray-50 p-3 rounded">
+                  <h4 className="font-semibold text-gray-800 mb-2">Informações Básicas</h4>
+                  <div className="space-y-2">
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium text-gray-500 mb-1">CPF/CNPJ (Cédula)</p>
+                      <p className="text-gray-900 font-semibold">{viewingCliente.cedula}</p>
+                    </div>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Nome</p>
+                      <p className="text-gray-900 font-semibold">{viewingCliente.nome}</p>
+                    </div>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
+                      <p className="text-gray-900">{viewingCliente.email}</p>
+                    </div>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Telefone</p>
+                      <p className="text-gray-900">{viewingCliente.telefone || 'Não especificado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Cidade</p>
+                      <p className="text-gray-900">{viewingCliente.cidade || 'Não especificada'}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="border-b pb-3">
-                  <p className="text-sm font-medium text-gray-500 mb-1">Nome</p>
-                  <p className="text-gray-900 font-semibold">{viewingCliente.nome}</p>
-                </div>
-                <div className="border-b pb-3">
-                  <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
-                  <p className="text-gray-900">{viewingCliente.email}</p>
-                </div>
-                <div className="border-b pb-3">
-                  <p className="text-sm font-medium text-gray-500 mb-1">Telefone</p>
-                  <p className="text-gray-900">{viewingCliente.telefone || 'Não especificado'}</p>
-                </div>
-                <div className="border-b pb-3">
-                  <p className="text-sm font-medium text-gray-500 mb-1">Cidade</p>
-                  <p className="text-gray-900">{viewingCliente.cidade || 'Não especificada'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Data de inscrição</p>
-                  <p className="text-gray-900">{new Date(viewingCliente.created_at).toLocaleDateString()}</p>
+
+                {/* Informações Empresariais */}
+                {(viewingCliente.empresa || viewingCliente.cnpj || viewingCliente.contato || viewingCliente.parceiro) && (
+                  <div className="bg-gray-50 p-3 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">Informações Empresariais</h4>
+                    <div className="space-y-2">
+                      {viewingCliente.empresa && (
+                        <div className="border-b pb-2">
+                          <p className="text-sm font-medium text-gray-500 mb-1">Empresa</p>
+                          <p className="text-gray-900">{viewingCliente.empresa}</p>
+                        </div>
+                      )}
+                      {viewingCliente.cnpj && (
+                        <div className="border-b pb-2">
+                          <p className="text-sm font-medium text-gray-500 mb-1">CNPJ</p>
+                          <p className="text-gray-900">{viewingCliente.cnpj}</p>
+                        </div>
+                      )}
+                      {viewingCliente.contato && (
+                        <div className="border-b pb-2">
+                          <p className="text-sm font-medium text-gray-500 mb-1">Contato</p>
+                          <p className="text-gray-900">{viewingCliente.contato}</p>
+                        </div>
+                      )}
+                      {viewingCliente.parceiro && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500 mb-1">Parceiro</p>
+                          <p className="text-gray-900">{viewingCliente.parceiro}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Datas e Relatórios */}
+                {(viewingCliente.vencimento || viewingCliente.data_bloqueio || viewingCliente.reuniao_apresentacao_agendada || viewingCliente.data_apresentacao_relatorio || viewingCliente.relatorio_gerado) && (
+                  <div className="bg-gray-50 p-3 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">Datas e Relatórios</h4>
+                    <div className="space-y-2">
+                      {viewingCliente.vencimento && (
+                        <div className="border-b pb-2">
+                          <p className="text-sm font-medium text-gray-500 mb-1">Vencimento</p>
+                          <p className="text-gray-900">{new Date(viewingCliente.vencimento).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {viewingCliente.data_bloqueio && (
+                        <div className="border-b pb-2">
+                          <p className="text-sm font-medium text-gray-500 mb-1">Data Bloqueio</p>
+                          <p className="text-gray-900">{new Date(viewingCliente.data_bloqueio).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {viewingCliente.reuniao_apresentacao_agendada && (
+                        <div className="border-b pb-2">
+                          <p className="text-sm font-medium text-gray-500 mb-1">Reunião Apresentação Agendada</p>
+                          <p className="text-gray-900">{new Date(viewingCliente.reuniao_apresentacao_agendada).toLocaleString()}</p>
+                        </div>
+                      )}
+                      {viewingCliente.data_apresentacao_relatorio && (
+                        <div className="border-b pb-2">
+                          <p className="text-sm font-medium text-gray-500 mb-1">Data Apresentação Relatório</p>
+                          <p className="text-gray-900">{new Date(viewingCliente.data_apresentacao_relatorio).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Relatório Gerado</p>
+                        <p className={`font-semibold ${viewingCliente.relatorio_gerado ? 'text-green-600' : 'text-gray-400'}`}>
+                          {viewingCliente.relatorio_gerado ? '✓ Sim' : '✗ Não'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Observações */}
+                {viewingCliente.observacoes && (
+                  <div className="bg-gray-50 p-3 rounded">
+                    <h4 className="font-semibold text-gray-800 mb-2">Observações</h4>
+                    <p className="text-gray-900 whitespace-pre-wrap">{viewingCliente.observacoes}</p>
+                  </div>
+                )}
+
+                {/* Meta informações */}
+                <div className="bg-gray-50 p-3 rounded">
+                  <h4 className="font-semibold text-gray-800 mb-2">Informações do Sistema</h4>
+                  <div className="space-y-2">
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium text-gray-500 mb-1">Data de Cadastro</p>
+                      <p className="text-gray-900">{new Date(viewingCliente.created_at).toLocaleString()}</p>
+                    </div>
+                    {viewingCliente.updated_at && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Última Atualização</p>
+                        <p className="text-gray-900">{new Date(viewingCliente.updated_at).toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end mt-6 space-x-3">

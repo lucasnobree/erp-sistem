@@ -8,6 +8,8 @@ import Vendas from './pages/Vendas'
 import Relatorios from './pages/Relatorios'
 import Usuarios from './pages/Usuarios'
 import TestAPI from './pages/TestAPI'
+import KanbanList from './components/KanbanList'
+import KanbanBoard from './components/KanbanBoard'
 
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true)
@@ -58,6 +60,8 @@ const App = () => {
           <Route path="clientes" element={<Clientes />} />
           <Route path="vendas" element={<Vendas />} />
           <Route path="relatorios" element={<Relatorios />} />
+          <Route path="atividades" element={<KanbanList />} />
+          <Route path="atividades/kanban/:id" element={<KanbanBoard />} />
           <Route path="test-api" element={<TestAPI />} />
         </Route>
       </Routes>

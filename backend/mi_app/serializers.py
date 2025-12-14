@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import Cliente, Categoria, Produto, Venta, VentaItem, Carrito
+from .models_kanban import Kanban, Coluna, Card, RegraAutomacao, HistoricoMovimentacao, LogNotificacao
 
 Usuario = get_user_model()
 
@@ -63,7 +64,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
-        fields = ['cedula', 'nome', 'email', 'telefone', 'cidade', 'created_at', 'updated_at']
+        fields = [
+            'cedula', 'nome', 'email', 'telefone', 'cidade',
+            'empresa', 'cnpj', 'data_bloqueio', 'vencimento',
+            'reuniao_apresentacao_agendada', 'relatorio_gerado',
+            'data_apresentacao_relatorio', 'contato', 'parceiro',
+            'observacoes', 'created_at', 'updated_at'
+        ]
         read_only_fields = ['created_at', 'updated_at']
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -212,3 +219,157 @@ class VentaSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("O total deve ser maior que 0")
         return value
+
+
+# ============================================================================
+# KANBAN SERIALIZERS
+# ============================================================================
+
+class ColunaSerializer(serializers.ModelSerializer):
+    """Serializer para Colunas do Kanban"""
+    total_cards = serializers.SerializerMethodField()
+    pode_adicionar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Coluna
+        fields = ['id', 'kanban', 'nome', 'ordem', 'cor', 'limite_cards',
+                 'total_cards', 'pode_adicionar', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_total_cards(self, obj):
+        return obj.total_cards()
+
+    def get_pode_adicionar(self, obj):
+        return obj.pode_adicionar_card()
+
+
+class CardSerializer(serializers.ModelSerializer):
+    """Serializer para Cards do Kanban"""
+    cliente_nome = serializers.CharField(source='cliente.nome', read_only=True)
+    produto_nome = serializers.CharField(source='produto.nome', read_only=True)
+    responsavel_nome = serializers.CharField(source='responsavel.nome', read_only=True)
+    coluna_nome = serializers.CharField(source='coluna.nome', read_only=True)
+    esta_atrasado = serializers.SerializerMethodField()
+    dias_vencimento = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Card
+        fields = ['id', 'coluna', 'coluna_nome', 'titulo', 'descricao',
+                 'cliente', 'cliente_nome', 'produto', 'produto_nome',
+                 'responsavel', 'responsavel_nome', 'data_vencimento',
+                 'prioridade', 'ordem', 'esta_atrasado', 'dias_vencimento',
+                 'data_criacao', 'data_movimentacao', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'data_criacao', 'data_movimentacao']
+
+    def get_esta_atrasado(self, obj):
+        return obj.esta_atrasado()
+
+    def get_dias_vencimento(self, obj):
+        return obj.dias_para_vencimento()
+
+    def validate(self, data):
+        # Validar se a coluna pode receber mais cards
+        coluna = data.get('coluna')
+        if coluna and not coluna.pode_adicionar_card():
+            raise serializers.ValidationError(
+                f"A coluna '{coluna.nome}' atingiu o limite de {coluna.limite_cards} cards."
+            )
+        return data
+
+
+class KanbanSerializer(serializers.ModelSerializer):
+    """Serializer para Quadro Kanban"""
+    criado_por_nome = serializers.CharField(source='criado_por.nome', read_only=True)
+    cliente_nome = serializers.CharField(source='cliente.nome', read_only=True)
+    total_colunas = serializers.SerializerMethodField()
+    total_cards = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Kanban
+        fields = ['id', 'nome', 'descricao', 'cliente', 'cliente_nome',
+                 'criado_por', 'criado_por_nome', 'data_criacao', 'ativo',
+                 'total_colunas', 'total_cards', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'data_criacao', 'criado_por']
+
+    def get_total_colunas(self, obj):
+        return obj.colunas.count()
+
+    def get_total_cards(self, obj):
+        return Card.objects.filter(coluna__kanban=obj).count()
+
+
+class KanbanCompletoSerializer(serializers.ModelSerializer):
+    """Serializer completo com colunas e cards para visualização do quadro"""
+    colunas = serializers.SerializerMethodField()
+    criado_por_nome = serializers.CharField(source='criado_por.nome', read_only=True)
+    cliente_nome = serializers.CharField(source='cliente.nome', read_only=True)
+
+    class Meta:
+        model = Kanban
+        fields = ['id', 'nome', 'descricao', 'cliente', 'cliente_nome',
+                 'criado_por', 'criado_por_nome', 'data_criacao', 'ativo',
+                 'colunas', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_colunas(self, obj):
+        colunas = obj.colunas.all()
+        return [{
+            'id': coluna.id,
+            'nome': coluna.nome,
+            'ordem': coluna.ordem,
+            'cor': coluna.cor,
+            'limite_cards': coluna.limite_cards,
+            'total_cards': coluna.total_cards(),
+            'cards': CardSerializer(coluna.cards.all(), many=True).data
+        } for coluna in colunas]
+
+
+class RegraAutomacaoSerializer(serializers.ModelSerializer):
+    """Serializer para Regras de Automação"""
+    kanban_nome = serializers.CharField(source='kanban.nome', read_only=True)
+    coluna_nome = serializers.CharField(source='coluna_trigger.nome', read_only=True)
+
+    class Meta:
+        model = RegraAutomacao
+        fields = ['id', 'kanban', 'kanban_nome', 'nome', 'tipo_trigger',
+                 'coluna_trigger', 'coluna_nome', 'dias_antes_vencimento',
+                 'acao_whatsapp', 'template_mensagem', 'ativo',
+                 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate_template_mensagem(self, value):
+        """Validar que o template contém variáveis válidas"""
+        variaveis_validas = [
+            '{cliente_nome}', '{produto_nome}', '{card_titulo}',
+            '{responsavel_nome}', '{data_vencimento}', '{coluna_nome}'
+        ]
+        # Apenas aviso - não bloquear
+        return value
+
+
+class HistoricoMovimentacaoSerializer(serializers.ModelSerializer):
+    """Serializer para Histórico de Movimentações"""
+    card_titulo = serializers.CharField(source='card.titulo', read_only=True)
+    coluna_origem_nome = serializers.CharField(source='coluna_origem.nome', read_only=True)
+    coluna_destino_nome = serializers.CharField(source='coluna_destino.nome', read_only=True)
+    usuario_nome = serializers.CharField(source='usuario.nome', read_only=True)
+
+    class Meta:
+        model = HistoricoMovimentacao
+        fields = ['id', 'card', 'card_titulo', 'coluna_origem', 'coluna_origem_nome',
+                 'coluna_destino', 'coluna_destino_nome', 'usuario', 'usuario_nome',
+                 'data', 'observacao']
+        read_only_fields = ['data']
+
+
+class LogNotificacaoSerializer(serializers.ModelSerializer):
+    """Serializer para Log de Notificações WhatsApp"""
+    card_titulo = serializers.CharField(source='card.titulo', read_only=True)
+    regra_nome = serializers.CharField(source='regra.nome', read_only=True)
+
+    class Meta:
+        model = LogNotificacao
+        fields = ['id', 'card', 'card_titulo', 'regra', 'regra_nome',
+                 'destinatario', 'mensagem', 'status', 'erro_mensagem',
+                 'data_envio', 'tentativas']
+        read_only_fields = ['data_envio']

@@ -12,7 +12,13 @@ from .views import (
     CategoriaViewSet,
     VentaViewSet,
     VentaItemViewSet,
-    CarritoViewSet
+    CarritoViewSet,
+    KanbanViewSet,
+    ColunaViewSet,
+    CardViewSet,
+    RegraAutomacaoViewSet,
+    HistoricoMovimentacaoViewSet,
+    LogNotificacaoViewSet
 )
 
 router = DefaultRouter()
@@ -22,6 +28,14 @@ router.register(r'categorias', CategoriaViewSet)
 router.register(r'vendas', VentaViewSet)
 router.register(r'venda-items', VentaItemViewSet)
 router.register(r'carrito', CarritoViewSet)
+
+# Kanban routes
+router.register(r'kanbans', KanbanViewSet)
+router.register(r'colunas', ColunaViewSet)
+router.register(r'cards', CardViewSet)
+router.register(r'regras-automacao', RegraAutomacaoViewSet)
+router.register(r'historico-movimentacao', HistoricoMovimentacaoViewSet)
+router.register(r'log-notificacao', LogNotificacaoViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

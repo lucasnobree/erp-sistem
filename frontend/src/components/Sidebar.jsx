@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Users, ShoppingCart, FileText, BarChart2, UserCircle, LogOut, ChevronRight } from 'lucide-react';
+import { Users, ShoppingCart, FileText, BarChart2, UserCircle, LogOut, ChevronRight, LayoutGrid } from 'lucide-react';
 import { logout } from '../services/auth';
 import { useState, useEffect } from 'react';
 import { makeAuthenticatedRequest } from '../services/auth';
@@ -25,34 +25,40 @@ const Sidebar = ({ isMobile = false, onItemClick = () => {} }) => {
   }, []);
 
   const allMenuItems = [
-    { 
-      name: 'Clientes', 
-      icon: Users, 
+    {
+      name: 'Clientes',
+      icon: Users,
       path: '/clientes',
       description: 'Gerenciar clientes'
     },
-    { 
-      name: 'Produtos', 
-      icon: ShoppingCart, 
+    {
+      name: 'Produtos',
+      icon: ShoppingCart,
       path: '/produtos',
       description: 'Inventário e catálogo'
     },
-    { 
-      name: 'Vendas', 
-      icon: FileText, 
+    {
+      name: 'Vendas',
+      icon: FileText,
       path: '/vendas',
       description: 'Processar vendas'
     },
-    { 
-      name: 'Relatórios', 
-      icon: BarChart2, 
-      path: '/relatorios', 
+    {
+      name: 'Atividades',
+      icon: LayoutGrid,
+      path: '/atividades',
+      description: 'Quadros Kanban'
+    },
+    {
+      name: 'Relatórios',
+      icon: BarChart2,
+      path: '/relatorios',
       adminOnly: true,
       description: 'Relatórios e estatísticas'
     },
-    { 
-      name: 'Usuários', 
-      icon: UserCircle, 
+    {
+      name: 'Usuários',
+      icon: UserCircle,
       path: '/usuarios',
       description: 'Gerenciar usuários'
     },
@@ -69,7 +75,7 @@ const Sidebar = ({ isMobile = false, onItemClick = () => {} }) => {
     logout();
   };
 
-  const handleItemClick = (path) => {
+  const handleItemClick = () => {
     onItemClick();
   };
 
@@ -145,7 +151,7 @@ const Sidebar = ({ isMobile = false, onItemClick = () => {} }) => {
             >
               <Link
                 to={item.path}
-                onClick={() => handleItemClick(item.path)}
+                onClick={handleItemClick}
                 className={`
                   group flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200
                   ${isActive 

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'drf_spectacular',  # Swagger/OpenAPI documentation
     'mi_app',
 ]
 
@@ -78,7 +79,8 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',  # Temporariamente permitir acesso sem autenticação
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',  # Swagger/OpenAPI
 }
 
 # Configuración de JWT
@@ -156,6 +158,16 @@ STATIC_URL = 'static/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Spectacular (Swagger/OpenAPI) Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ERP Sistema de Gestão Comercial API',
+    'DESCRIPTION': 'API completa para sistema de gestão comercial com controle de clientes, produtos, vendas e estoque',
+    'VERSION': '2.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': r'/api/',
+}
 
 # Supabase configuration
 SUPABASE_URL = env('SUPABASE_URL', default='')
