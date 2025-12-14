@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import KanbanColumn from './KanbanColumn';
 import KanbanCard from './KanbanCard';
-import { ArrowLeft, Plus, Settings } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, User, Mail, Phone, Building, MapPin } from 'lucide-react';
 
 const KanbanBoard = () => {
   const { id } = useParams();
@@ -217,6 +217,17 @@ const KanbanBoard = () => {
           </div>
         </div>
       </div>
+
+      {/* Client Info */}
+      {kanban.cliente_nome && (
+        <div className="bg-blue-50 border-b border-blue-200 px-6 py-2">
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-gray-700">Cliente:</span>
+            <span className="text-sm text-gray-900 font-semibold">{kanban.cliente_nome}</span>
+          </div>
+        </div>
+      )}
 
       {/* Column Modal */}
       {showColumnModal && (

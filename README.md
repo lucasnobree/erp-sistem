@@ -1,23 +1,27 @@
-# Sistema de Gestão Comercial
+# ERP-SISTEM
 
-## VERSÃO 2.0.0 - ATUALIZAÇÃO CLOUDINARY & ANIMAÇÕES
+Sistema ERP completo com gerenciamento de clientes, produtos, vendas e sistema Kanban integrado.
 
-### DOCUMENTAÇÃO DA VERSÃO:
-- [**VERSION.md**](./VERSION.md) - Informação detalhada da versão atual
-- [**CHANGELOG.md**](./CHANGELOG.md) - Registro completo de mudanças e melhorias
-- [**Frontend README**](./frontend/README.md) - Documentação específica do frontend
+## 📚 Documentação
+
+- **[API Documentation](./API_DOCUMENTATION.md)** - Documentação completa da API com todos os endpoints
+- **[Kanban Planning](./KANBAN.md)** - Planejamento e especificação do sistema Kanban
+- **[Frontend README](./frontend/README.md)** - Documentação específica do frontend
+- **[Swagger UI](http://localhost:8000/api/schema/swagger-ui/)** - Documentação interativa da API (servidor rodando)
 
 ---
 
 ## VERSÃO 2.0.0 - NOVAS CARACTERÍSTICAS
 
 ### NOVIDADES DESTA VERSÃO:
+- **Sistema Kanban Completo** - Quadros Kanban com drag & drop para gerenciar atividades por cliente
+- **Automação WhatsApp** - Regras de automação para notificações via WhatsApp
 - **Gestão de imagens com Cloudinary** - Upload e armazenamento de imagens de produtos
-- **Animações melhoradas** - Interface mais fluida com Framer Motion
+- **Animações melhoradas** - Interface mais fluida com Framer Motion e @dnd-kit
 - **Sistema de roles avançado** - Controle granular de permissões por usuário
+- **PostgreSQL** - Migração de SQLite para PostgreSQL para melhor performance
 - **Interface otimizada** - Melhor experiência de usuário e design responsivo
 - **Validações melhoradas** - Maior segurança em formulários e dados
-- **Desempenho otimizado** - Carregamento mais rápido e eficiente
 
 ---
 
@@ -46,28 +50,24 @@ Um projeto full stack moderno que combina Django como backend e React com Vite c
 
 ### Backend
 - **Django 5.2.4** - Framework web de Python
-- **Django REST Framework** - Framework de API REST 
-- **Simple JWT** - Autenticação baseada em tokens JWT
-- **SQLite** - Banco de dados (por padrão)
-- **Python** - Linguagem de programação
-- **Pillow** - Processamento de imagens
+- **Django REST Framework 3.14.0** - Framework de API REST
+- **Simple JWT 5.3.1** - Autenticação baseada em tokens JWT
+- **PostgreSQL 15** - Banco de dados relacional
+- **Cloudinary** - Gerenciamento de imagens na nuvem
+- **drf-spectacular** - Documentação OpenAPI/Swagger
 - **Django Filter** - Filtragem avançada de dados
-- **Django Extensions** - Utilitários de desenvolvimento
+- **psycopg2** - Adaptador PostgreSQL para Python
 
 ### Frontend
 - **React 19.1.0** - Biblioteca de JavaScript para interfaces de usuário
-- **Vite 7.0.0** - Ferramenta de construção e desenvolvimento
-- **React Router DOM 7.6.3** - Roteamento para aplicações React
+- **Vite 5.4.21** - Ferramenta de construção e desenvolvimento
+- **React Router DOM** - Roteamento para aplicações React
 - **Tailwind CSS 3.4.1** - Framework de CSS utilitário
-- **Headless UI 2.2.4** - Componentes de UI acessíveis
-- **Lucide React 0.525.0** - Ícones SVG para React
-- **Axios 1.6.7** - Cliente HTTP para requisições API
-- **Framer Motion 12.23.0** - Biblioteca de animações
-- **ESLint** - Linter para JavaScript/React
+- **@dnd-kit 6.3.1** - Biblioteca drag & drop para Kanban
+- **Lucide React** - Ícones SVG para React
+- **Framer Motion** - Biblioteca de animações
 - **Cloudinary React** - Gestão de imagens na nuvem
-- **Cloudinary URL-Gen** - Geração de URLs otimizadas
-- **SHA.js** - Funções de hash criptográficas
-- **Supabase** - Backend como serviço
+- **ESLint** - Linter para JavaScript/React
 
 ### Ferramentas de Desenvolvimento
 - **pnpm** - Gerenciador de pacotes para o frontend

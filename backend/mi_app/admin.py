@@ -53,9 +53,9 @@ class CarritoAdmin(admin.ModelAdmin):
 # Kanban System Admin
 @admin.register(Kanban)
 class KanbanAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nome', 'criado_por', 'ativo', 'data_criacao')
-    list_filter = ('ativo', 'data_criacao')
-    search_fields = ('nome', 'descricao')
+    list_display = ('id', 'nome', 'cliente', 'criado_por', 'ativo', 'data_criacao')
+    list_filter = ('ativo', 'data_criacao', 'cliente')
+    search_fields = ('nome', 'descricao', 'cliente__nome')
     readonly_fields = ('created_at', 'updated_at')
 
 

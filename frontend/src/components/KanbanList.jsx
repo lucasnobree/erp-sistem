@@ -19,6 +19,7 @@ const KanbanList = () => {
 
   useEffect(() => {
     fetchKanbans();
+    fetchClientes();
   }, []);
 
   const fetchKanbans = async () => {
@@ -38,28 +39,48 @@ const KanbanList = () => {
     }
   };
 
+  const fetchClientes = async () => {
+    try {
+      const response = await makeAuthenticatedRequest('/clientes/');
+      if (response.ok) {
+        const data = await response.json();
+        setClientes(data);
+      }
+    } catch (err) {
+      console.error('Error fetching clientes:', err);
+    }
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
+      // Prepare payload with cliente as integer
+      const payload = {
+        nome: formData.nome,
+        descricao: formData.descricao,
+        cliente: parseInt(formData.cliente),
+        ativo: formData.ativo
+      };
+
       const response = await makeAuthenticatedRequest('/kanbans/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         const newKanban = await response.json();
         setKanbans([newKanban, ...kanbans]);
         setShowCreateModal(false);
-        setFormData({ nome: '', descricao: '', ativo: true });
+        setFormData({ nome: '', descricao: '', cliente: '', ativo: true });
         // Navigate to the new kanban
         navigate(`/atividades/kanban/${newKanban.id}`);
       } else {
         const errorData = await response.json();
-        alert(errorData.detail || 'Erro ao criar quadro');
+        alert(JSON.stringify(errorData) || 'Erro ao criar quadro');
       }
     } catch (err) {
-      alert('Erro de conexão');
+      alert('Erro de conexão: ' + err.message);
     }
   };
 
@@ -148,6 +169,24 @@ const KanbanList = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cliente *
+                  </label>
+                  <select
+                    value={formData.cliente}
+                    onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                  >
+                    <option value="">Selecione um cliente</option>
+                    {clientes.map((cliente) => (
+                      <option key={cliente.id} value={cliente.id}>
+                        {cliente.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Descrição
                   </label>
                   <textarea
@@ -224,6 +263,15 @@ const KanbanList = () => {
 
                 {kanban.descricao && (
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{kanban.descricao}</p>
+                )}
+
+                {kanban.cliente_nome && (
+                  <div className="mb-3 px-3 py-2 bg-blue-50 rounded-md border border-blue-100">
+                    <div className="flex items-center gap-2 text-sm text-blue-700">
+                      <Users className="w-4 h-4" />
+                      <span className="font-medium">{kanban.cliente_nome}</span>
+                    </div>
+                  </div>
                 )}
 
                 <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">

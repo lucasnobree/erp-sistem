@@ -36,7 +36,8 @@ class Kanban(models.Model):
         verbose_name_plural = 'Quadros Kanban'
 
     def __str__(self):
-        return f"{self.nome} - {self.cliente.nome}"
+        cliente_nome = self.cliente.nome if self.cliente else "Sem cliente"
+        return f"{self.nome} - {cliente_nome}"
 
 
 class Coluna(models.Model):

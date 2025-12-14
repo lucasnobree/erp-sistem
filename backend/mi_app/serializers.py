@@ -303,13 +303,28 @@ class KanbanCompletoSerializer(serializers.ModelSerializer):
     colunas = serializers.SerializerMethodField()
     criado_por_nome = serializers.CharField(source='criado_por.nome', read_only=True)
     cliente_nome = serializers.CharField(source='cliente.nome', read_only=True)
+    cliente_info = serializers.SerializerMethodField()
 
     class Meta:
         model = Kanban
-        fields = ['id', 'nome', 'descricao', 'cliente', 'cliente_nome',
+        fields = ['id', 'nome', 'descricao', 'cliente', 'cliente_nome', 'cliente_info',
                  'criado_por', 'criado_por_nome', 'data_criacao', 'ativo',
                  'colunas', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_cliente_info(self, obj):
+        """Retorna informações completas do cliente"""
+        if obj.cliente:
+            return {
+                'cedula': obj.cliente.cedula,
+                'nome': obj.cliente.nome,
+                'email': obj.cliente.email,
+                'telefone': obj.cliente.telefone,
+                'cidade': obj.cliente.cidade,
+                'empresa': obj.cliente.empresa,
+                'contato': obj.cliente.contato,
+            }
+        return None
 
     def get_colunas(self, obj):
         colunas = obj.colunas.all()
