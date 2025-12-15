@@ -18,7 +18,10 @@ import {
 } from '@dnd-kit/sortable';
 import KanbanColumn from './KanbanColumn';
 import KanbanCard from './KanbanCard';
-import { ArrowLeft, Plus, Settings, User, Mail, Phone, Building, MapPin } from 'lucide-react';
+import ModalRegraAutomacao from './ModalRegraAutomacao';
+import ModalGerenciarRegras from './ModalGerenciarRegras';
+import ModalKanban from './ModalKanban';
+import { ArrowLeft, Plus, Settings, User, Mail, Phone, Building, MapPin, Edit, Zap, ChevronDown, List } from 'lucide-react';
 
 const KanbanBoard = () => {
   const { id } = useParams();
@@ -33,6 +36,10 @@ const KanbanBoard = () => {
     cor: '#3B82F6',
     limite_cards: ''
   });
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showRegraModal, setShowRegraModal] = useState(false);
+  const [showGerenciarRegras, setShowGerenciarRegras] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -63,6 +70,52 @@ const KanbanBoard = () => {
       setError('Erro de conexão');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditKanban = async (kanbanData) => {
+    try {
+      const response = await makeAuthenticatedRequest(`/kanbans/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(kanbanData)
+      });
+
+      if (response.ok) {
+        setShowEditModal(false);
+        // Atualizar dados locais
+        setKanban(prev => ({
+          ...prev,
+          nome: kanbanData.nome,
+          descricao: kanbanData.descricao
+        }));
+        alert('Quadro atualizado com sucesso!');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.detail || 'Erro ao atualizar quadro');
+      }
+    } catch (err) {
+      alert('Erro de conexão');
+    }
+  };
+
+  const handleSaveRegra = async (regraData) => {
+    try {
+      const response = await makeAuthenticatedRequest('/regras-automacao/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(regraData)
+      });
+
+      if (response.ok) {
+        setShowRegraModal(false);
+        alert('Regra de automação criada com sucesso!');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.detail || 'Erro ao criar regra de automação');
+      }
+    } catch (err) {
+      alert('Erro de conexão');
     }
   };
 
@@ -211,12 +264,61 @@ const KanbanBoard = () => {
               <Plus className="w-5 h-5" />
               Nova Coluna
             </button>
-            <button className="text-gray-600 hover:text-gray-900">
-              <Settings className="w-6 h-6" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+                className="text-gray-600 hover:text-gray-900 flex items-center gap-1 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <Settings className="w-5 h-5" />
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {showSettingsMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                  <button
+                    onClick={() => {
+                      setShowSettingsMenu(false);
+                      setShowEditModal(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Editar Quadro
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSettingsMenu(false);
+                      setShowRegraModal(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                  >
+                    <Zap className="w-4 h-4" />
+                    Criar Regra de Automação
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSettingsMenu(false);
+                      setShowGerenciarRegras(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <List className="w-4 h-4" />
+                    Gerenciar Regras
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Overlay para fechar menu de configurações */}
+      {showSettingsMenu && (
+        <div 
+          className="fixed inset-0 z-40"
+          onClick={() => setShowSettingsMenu(false)}
+        />
+      )}
 
       {/* Client Info */}
       {kanban.cliente_nome && (
@@ -260,7 +362,7 @@ const KanbanBoard = () => {
                     value={newColumnData.nome}
                     onChange={(e) => setNewColumnData({ ...newColumnData, nome: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
                     placeholder="Ex: A Fazer"
                   />
                 </div>
@@ -284,7 +386,7 @@ const KanbanBoard = () => {
                     value={newColumnData.limite_cards}
                     onChange={(e) => setNewColumnData({ ...newColumnData, limite_cards: e.target.value })}
                     min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
                     placeholder="Sem limite"
                   />
                 </div>
@@ -307,6 +409,32 @@ const KanbanBoard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Regra de Automação */}
+      {showRegraModal && (
+        <ModalRegraAutomacao
+          kanban={kanban}
+          onSave={handleSaveRegra}
+          onClose={() => setShowRegraModal(false)}
+        />
+      )}
+
+      {/* Modal de Gerenciar Regras */}
+      {showGerenciarRegras && (
+        <ModalGerenciarRegras
+          kanban={kanban}
+          onClose={() => setShowGerenciarRegras(false)}
+        />
+      )}
+
+      {/* Modal de Edição do Quadro */}
+      {showEditModal && (
+        <ModalKanban
+          kanban={kanban}
+          onSave={handleEditKanban}
+          onClose={() => setShowEditModal(false)}
+        />
       )}
 
       {/* Kanban Board */}

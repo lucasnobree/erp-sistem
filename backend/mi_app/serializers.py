@@ -327,7 +327,7 @@ class KanbanCompletoSerializer(serializers.ModelSerializer):
         return None
 
     def get_colunas(self, obj):
-        colunas = obj.colunas.all()
+        colunas = obj.colunas.all().order_by('ordem')
         return [{
             'id': coluna.id,
             'nome': coluna.nome,
@@ -335,7 +335,7 @@ class KanbanCompletoSerializer(serializers.ModelSerializer):
             'cor': coluna.cor,
             'limite_cards': coluna.limite_cards,
             'total_cards': coluna.total_cards(),
-            'cards': CardSerializer(coluna.cards.all(), many=True).data
+            'cards': CardSerializer(coluna.cards.all().order_by('ordem', '-data_criacao'), many=True).data
         } for coluna in colunas]
 
 
