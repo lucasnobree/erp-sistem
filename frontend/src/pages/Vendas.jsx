@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, User, Package, CreditCard, CheckCircle, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabase';
@@ -44,6 +44,19 @@ const fetchWithAuth = async (url, options = {}) => {
 };
 
 const VendasPage = () => {
+  const normalizeProduto = (produto) => {
+    const preco = parseFloat(produto.preco ?? produto.price ?? 0);
+    const estoque = parseInt(produto.estoque ?? produto.stock ?? 0, 10);
+
+    return {
+      ...produto,
+      preco: isNaN(preco) ? 0 : preco,
+      estoque: isNaN(estoque) ? 0 : estoque,
+      imagem_url: produto.imagem_url ?? produto.imagen_url ?? null,
+      categoria_nome: produto.categoria_nome ?? produto.categoria?.nome ?? ''
+    };
+  };
+
   const [carrito, setCarrito] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [cpf_cnpj, setcpf_cnpj] = useState('');
@@ -55,6 +68,7 @@ const VendasPage = () => {
   const [error, setError] = useState(null);
   const [processandoVenda, setProcessandoVenda] = useState(false);
   const [quantidadesProdutos, setQuantidadesProdutos] = useState({});
+  const carrinhoRef = useRef(null);
 
   useEffect(() => {
     fetchProdutos();
@@ -110,27 +124,38 @@ const VendasPage = () => {
     }
   };
 
-  const adicionarAoCarrinho = (produto, quantidade = 1) => {
-    const existeNoCarrinho = carrito.find(item => item.id === produto.id);
+  const adicionarAoCarrinho = (produtoOriginal, quantidade = 1) => {
+    try {
+      const produto = normalizeProduto(produtoOriginal);
+      const existeNoCarrinho = carrito.find(item => item.id === produto.id);
     
-    if (existeNoCarrinho) {
-      // Se já existe, verificar que não exceda o estoque
-      const novaQuantidade = existeNoCarrinho.cantidad + quantidade;
-      if (novaQuantidade > produto.estoque) {
-        setError(`Não é possível adicionar mais de ${produto.estoque} unidades de ${produto.nome}. Você já tem ${existeNoCarrinho.cantidad} no carrinho.`);
-        return;
+      if (existeNoCarrinho) {
+        // Se já existe, verificar que não exceda o estoque
+        const novaQuantidade = existeNoCarrinho.cantidad + quantidade;
+        if (novaQuantidade > produto.estoque) {
+          setError(`Não é possível adicionar mais de ${produto.estoque} unidades de ${produto.nome}. Você já tem ${existeNoCarrinho.cantidad} no carrinho.`);
+          return;
+        }
+        atualizarQuantidade(produto.id, novaQuantidade);
+      } else {
+        // Se não existe, verificar que a quantidade não exceda o estoque
+        if (quantidade > produto.estoque) {
+          setError(`Não é possível adicionar ${quantidade} unidades de ${produto.nome}. Apenas ${produto.estoque} disponíveis.`);
+          return;
+        }
+        setCarrito([...carrito, { ...produto, cantidad: quantidade }]);
       }
-      atualizarQuantidade(produto.id, novaQuantidade);
-    } else {
-      // Se não existe, verificar que a quantidade não exceda o estoque
-      if (quantidade > produto.estoque) {
-        setError(`Não é possível adicionar ${quantidade} unidades de ${produto.nome}. Apenas ${produto.estoque} disponíveis.`);
-        return;
+      // Limpar erro se a operação foi bem-sucedida
+      setError(null);
+
+      // Rolagem suave até o carrinho para o usuário ver o item adicionado
+      if (carrinhoRef.current) {
+        carrinhoRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      setCarrito([...carrito, { ...produto, cantidad: quantidade }]);
+    } catch (err) {
+      console.error('Erro ao adicionar ao carrinho:', err);
+      setError('Erro ao adicionar produto ao carrinho. Tente novamente.');
     }
-    // Limpar erro se a operação foi bem-sucedida
-    setError(null);
   };
 
   const atualizarQuantidade = (id, novaQuantidade) => {
@@ -395,9 +420,9 @@ const VendasPage = () => {
                   
                   {/* Imagem do produto */}
                   <div className="relative w-full h-40 sm:h-48 mb-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden">
-                    {produto.imagen_url ? (
+                    {produto.imagem_url ? (
                       <motion.img
-                        src={produto.imagen_url}
+                        src={produto.imagem_url}
                         alt={produto.nome}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         onError={(e) => {
@@ -408,7 +433,7 @@ const VendasPage = () => {
                     ) : null}
                     <div 
                       className="w-full h-full flex items-center justify-center text-gray-400"
-                      style={{ display: produto.imagen_url ? 'none' : 'flex' }}
+                      style={{ display: produto.imagem_url ? 'none' : 'flex' }}
                     >
                       <Package className="w-12 h-12" />
                     </div>
@@ -561,6 +586,7 @@ const VendasPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6"
+          ref={carrinhoRef}
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-gradient-to-r from-orange-500 to-yellow-600 rounded-xl">

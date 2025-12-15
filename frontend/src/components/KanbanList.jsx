@@ -54,11 +54,11 @@ const KanbanList = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      // Prepare payload with cliente as integer
+      // Prepare payload with cliente (cedula) como string
       const payload = {
         nome: formData.nome,
         descricao: formData.descricao,
-        cliente: parseInt(formData.cliente),
+        cliente: formData.cliente ? String(formData.cliente) : null,
         ativo: formData.ativo
       };
 
@@ -109,6 +109,18 @@ const KanbanList = () => {
       </div>
     );
   }
+
+  const getClienteNome = (kanban) => {
+    if (kanban?.cliente_nome) return kanban.cliente_nome;
+    if (kanban?.cliente_info?.nome) return kanban.cliente_info.nome;
+    if (kanban?.cliente?.nome) return kanban.cliente.nome;
+
+    const clienteId = kanban?.cliente_id ?? kanban?.cliente ?? kanban?.cliente_cedula;
+    if (!clienteId) return null;
+
+    const cliente = clientes.find((c) => String(c.cedula) === String(clienteId));
+    return cliente?.nome ?? null;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -179,7 +191,7 @@ const KanbanList = () => {
                   >
                     <option value="">Selecione um cliente</option>
                     {clientes.map((cliente) => (
-                      <option key={cliente.id} value={cliente.id}>
+                      <option key={cliente.cedula} value={cliente.cedula}>
                         {cliente.nome}
                       </option>
                     ))}
@@ -265,11 +277,11 @@ const KanbanList = () => {
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{kanban.descricao}</p>
                 )}
 
-                {kanban.cliente_nome && (
+                {getClienteNome(kanban) && (
                   <div className="mb-3 px-3 py-2 bg-blue-50 rounded-md border border-blue-100">
                     <div className="flex items-center gap-2 text-sm text-blue-700">
                       <Users className="w-4 h-4" />
-                      <span className="font-medium">{kanban.cliente_nome}</span>
+                      <span className="font-medium">{getClienteNome(kanban)}</span>
                     </div>
                   </div>
                 )}

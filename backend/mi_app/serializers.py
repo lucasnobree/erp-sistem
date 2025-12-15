@@ -80,11 +80,12 @@ class CategoriaSerializer(serializers.ModelSerializer):
 
 class ProdutoSerializer(serializers.ModelSerializer):
     categoria_nome = serializers.CharField(source='categoria.nome', read_only=True)
+    cliente_nome = serializers.CharField(source='cliente.nome', read_only=True)
 
     class Meta:
         model = Produto
         fields = ['id', 'nome', 'descricao', 'preco', 'estoque', 'imagem_url', 
-                 'categoria', 'categoria_nome', 'created_at', 'updated_at']
+                 'categoria', 'categoria_nome', 'cliente', 'cliente_nome', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
     def validate_preco(self, value):

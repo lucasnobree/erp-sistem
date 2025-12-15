@@ -518,9 +518,15 @@ class ProdutoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Produto.objects.all().order_by('-created_at')
-        categoria = self.request.query_params.get('categoria', None)
+        categoria = self.request.query_params.get('categoria')
+        cliente = self.request.query_params.get('cliente')
+
         if categoria is not None:
             queryset = queryset.filter(categoria_id=categoria)
+
+        if cliente:
+            queryset = queryset.filter(cliente_id=cliente)
+
         return queryset
 
     def create(self, request, *args, **kwargs):

@@ -190,6 +190,7 @@ const ProdutosTableContainer = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-48">Descrição</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoria</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estoque</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
@@ -209,7 +210,12 @@ const ProdutosTableContainer = () => {
                         className="h-10 w-10 rounded-full mr-3"
                       />
                     )}
-                    <div className="text-sm font-medium text-gray-900">{produto.nome}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {produto.nome}
+                      <div className="text-xs text-gray-500">
+                        Cliente: {produto.cliente_nome || produto?.cliente?.nome || produto.cliente || '—'}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td className="px-4 py-4 text-sm text-gray-500 max-w-48">
@@ -217,6 +223,9 @@ const ProdutosTableContainer = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {produto.categoria_nome}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {produto.cliente_nome || '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -350,6 +359,13 @@ const ProdutosTable = ({ produtos, onEdit, onDelete, loading }) => {
             </th>
             <th
               scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+              onClick={() => requestSort('cliente_nome')}
+            >
+              Cliente {getSortIndicator('cliente_nome')}
+            </th>
+            <th
+              scope="col"
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Ações
@@ -359,13 +375,13 @@ const ProdutosTable = ({ produtos, onEdit, onDelete, loading }) => {
         <tbody className="bg-white divide-y divide-gray-200">
           {loading ? (
             <tr>
-              <td colSpan="7" className="px-6 py-4 text-center">
+              <td colSpan="8" className="px-6 py-4 text-center">
                 Carregando produtos...
               </td>
             </tr>
           ) : sortedProdutos.length === 0 ? (
             <tr>
-              <td colSpan="7" className="px-6 py-4 text-center">
+              <td colSpan="8" className="px-6 py-4 text-center">
                 Não possui produtos disponiveis
               </td>
             </tr>
@@ -401,6 +417,9 @@ const ProdutosTable = ({ produtos, onEdit, onDelete, loading }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {produto.categoria_nome || 'Sem categoria'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {produto.cliente_nome || produto?.cliente?.nome || produto.cliente || '—'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex space-x-2">
