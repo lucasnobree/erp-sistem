@@ -342,7 +342,7 @@ class KanbanCompletoSerializer(serializers.ModelSerializer):
 class RegraAutomacaoSerializer(serializers.ModelSerializer):
     """Serializer para Regras de Automação"""
     kanban_nome = serializers.CharField(source='kanban.nome', read_only=True)
-    coluna_nome = serializers.CharField(source='coluna_trigger.nome', read_only=True)
+    coluna_nome = serializers.SerializerMethodField()
 
     class Meta:
         model = RegraAutomacao
@@ -351,6 +351,12 @@ class RegraAutomacaoSerializer(serializers.ModelSerializer):
                  'acao_whatsapp', 'template_mensagem', 'ativo',
                  'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_coluna_nome(self, obj):
+        """Retorna o nome da coluna trigger"""
+        if obj.coluna_trigger:
+            return obj.coluna_trigger.nome
+        return None
 
     def validate_template_mensagem(self, value):
         """Validar que o template contém variáveis válidas"""

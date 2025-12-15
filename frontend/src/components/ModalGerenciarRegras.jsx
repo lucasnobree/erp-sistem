@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { X, Zap, Edit, Trash2, Power, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { makeAuthenticatedRequest } from '../services/auth';
+import ModalRegraAutomacao from './ModalRegraAutomacao';
 
 const ModalGerenciarRegras = ({ kanban, onClose }) => {
   const [regras, setRegras] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingRegra, setEditingRegra] = useState(null);
 
   useEffect(() => {
     fetchRegras();
@@ -62,6 +64,28 @@ const ModalGerenciarRegras = ({ kanban, onClose }) => {
         setRegras(regras.filter(regra => regra.id !== regraId));
       } else {
         alert('Erro ao excluir regra');
+      }
+    } catch (err) {
+      alert('Erro de conexão');
+    }
+  };
+
+  const handleUpdateRegra = async (regraData) => {
+    try {
+      const response = await makeAuthenticatedRequest(`/regras-automacao/${editingRegra.id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(regraData)
+      });
+
+      if (response.ok) {
+        const updatedRegra = await response.json();
+        setRegras(regras.map(regra => 
+          regra.id === editingRegra.id ? updatedRegra : regra
+        ));
+        setEditingRegra(null);
+      } else {
+        alert('Erro ao atualizar regra');
       }
     } catch (err) {
       alert('Erro de conexão');
@@ -200,10 +224,7 @@ const ModalGerenciarRegras = ({ kanban, onClose }) => {
                         <Power className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => {
-                          // TODO: Implementar edição
-                          console.log('Editar regra:', regra.id);
-                        }}
+                        onClick={() => setEditingRegra(regra)}
                         className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                         title="Editar regra"
                       >
@@ -234,8 +255,17 @@ const ModalGerenciarRegras = ({ kanban, onClose }) => {
           </button>
         </div>
       </motion.div>
+      
+      {/* Modal de Edição */}
+      {editingRegra && (
+        <ModalRegraAutomacao
+          kanban={kanban}
+          regra={editingRegra}
+          onSave={handleUpdateRegra}
+          onClose={() => setEditingRegra(null)}
+        />
+      )}
     </div>
   );
-};
-
+}
 export default ModalGerenciarRegras;

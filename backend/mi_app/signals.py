@@ -28,14 +28,7 @@ def process_card_automation(sender, instance, created, **kwargs):
             if regra.tipo_trigger == 'criacao' and created:
                 should_trigger = True
                 
-            elif regra.tipo_trigger == 'movimentacao' and not created:
-                # Verificar se foi movido para a coluna específica
-                if regra.coluna_trigger:
-                    if instance.coluna.id == regra.coluna_trigger.id:
-                        should_trigger = True
-                else:
-                    # Se não tem coluna específica, qualquer movimentação dispara
-                    should_trigger = True
+            # Movimentação é processada apenas no HistoricoMovimentacao signal
             
             elif regra.tipo_trigger == 'atribuicao' and not created:
                 # Verificar se foi atribuído um responsável
@@ -58,8 +51,9 @@ def send_automation_notification(regra, card):
         message = regra.template_mensagem
         
         # Substituir variáveis básicas
-        if card.cliente:
-            message = message.replace('{cliente_nome}', card.cliente.nome)
+        kanban_cliente = card.coluna.kanban.cliente
+        if kanban_cliente:
+            message = message.replace('{cliente_nome}', kanban_cliente.nome)
         if card.produto:
             message = message.replace('{produto_nome}', card.produto.nome)
         if card.responsavel:
@@ -74,12 +68,17 @@ def send_automation_notification(regra, card):
         to_email = None
         destinatario_nome = ""
         
-        if regra.acao_whatsapp == 'cliente' and card.cliente:
-            to_email = card.cliente.email
-            destinatario_nome = card.cliente.nome
+        if regra.acao_whatsapp == 'cliente':
+            # Usar cliente do quadro Kanban em vez do card
+            kanban = card.coluna.kanban
+            
+            kanban_cliente = kanban.cliente
+            if kanban_cliente:
+                to_email = getattr(kanban_cliente, 'email', None)
+                destinatario_nome = kanban_cliente.nome
             
         elif regra.acao_whatsapp == 'responsavel' and card.responsavel:
-            to_email = card.responsavel.email
+            to_email = getattr(card.responsavel, 'email', None)
             destinatario_nome = card.responsavel.nome
             
         elif regra.acao_whatsapp == 'admin':
@@ -87,33 +86,83 @@ def send_automation_notification(regra, card):
             from .models import Usuario
             admin = Usuario.objects.filter(is_superuser=True).first()
             if admin:
-                to_email = admin.email
+                to_email = getattr(admin, 'email', None)
                 destinatario_nome = admin.nome
         
-        # Registrar log da notificação (sem enviar email real por enquanto)
-        if to_email:
-            LogNotificacao.objects.create(
-                card=card,
-                regra=regra,
-                destinatario=f"{destinatario_nome} <{to_email}>",
-                mensagem=message,
-                status='enviado',
-                erro_mensagem=None
-            )
-            
-            logger.info(f"Notificação registrada para {to_email}")
+        # Enviar email real
+        if to_email and to_email.strip():
+            try:
+                from django.core.mail import EmailMultiAlternatives
+                from django.template.loader import render_to_string
+                from django.conf import settings
+                
+                # Renderizar template HTML
+                html_content = render_to_string('emails/kanban_notification.html', {
+                    'card': card,
+                    'regra': regra,
+                    'mensagem_processada': message,
+                    'destinatario_nome': destinatario_nome
+                })
+                
+                # Criar email com HTML
+                email = EmailMultiAlternatives(
+                    subject=f'Notificação Kanban - {card.titulo}',
+                    body=message,  # Texto plano como fallback
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[to_email]
+                )
+                email.attach_alternative(html_content, "text/html")
+                email.send()
+                
+                # Registrar log de sucesso
+                LogNotificacao.objects.create(
+                    card=card,
+                    regra=regra,
+                    destinatario=f"{destinatario_nome} <{to_email}>",
+                    mensagem=message,
+                    status='enviado',
+                    erro_mensagem=None
+                )
+                
+
+                
+            except Exception as email_error:
+                # Registrar log de erro no envio
+                LogNotificacao.objects.create(
+                    card=card,
+                    regra=regra,
+                    destinatario=f"{destinatario_nome} <{to_email}>",
+                    mensagem=message,
+                    status='erro',
+                    erro_mensagem=f'Erro ao enviar email: {str(email_error)}'
+                )
+                
+                logger.error(f"Erro ao enviar email para {to_email}: {email_error}")
         else:
-            # Registrar log de erro
+            # Registrar log de erro com mais detalhes
+            erro_msg = f'Email inválido: "{to_email}"'
+            if regra.acao_whatsapp == 'cliente':
+                kanban_cliente = card.coluna.kanban.cliente
+                if not kanban_cliente:
+                    erro_msg = 'Quadro não possui cliente associado'
+                else:
+                    erro_msg = f'Cliente do quadro "{kanban_cliente.nome}" não possui email válido'
+            elif regra.acao_whatsapp == 'responsavel':
+                if not card.responsavel:
+                    erro_msg = 'Card não possui responsável associado'
+                else:
+                    erro_msg = f'Responsável "{card.responsavel.nome}" não possui email válido'
+            
             LogNotificacao.objects.create(
                 card=card,
                 regra=regra,
-                destinatario="Destinatário não encontrado",
+                destinatario=f"{destinatario_nome or 'N/A'}",
                 mensagem=message,
                 status='erro',
-                erro_mensagem='Email do destinatário não encontrado'
+                erro_mensagem=erro_msg
             )
             
-            logger.warning(f"Destinatário não encontrado para regra {regra.nome}")
+            logger.warning(f"Destinatário não encontrado para regra {regra.nome}: {erro_msg}")
             
     except Exception as e:
         # Registrar log de erro
@@ -137,7 +186,6 @@ def log_card_movement(sender, instance, created, **kwargs):
     Log adicional para movimentações de cards
     """
     if created:
-        logger.info(f"Card {instance.card.titulo} movido para {instance.coluna_destino.nome}")
         
         # Verificar se há regras de automação para movimentação
         try:

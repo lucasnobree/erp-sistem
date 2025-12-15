@@ -58,7 +58,7 @@ const KanbanList = () => {
       const payload = {
         nome: formData.nome,
         descricao: formData.descricao,
-        cliente: parseInt(formData.cliente),
+        cliente: formData.cliente, // Usar cedula diretamente, não parseInt
         ativo: formData.ativo
       };
 
@@ -179,7 +179,7 @@ const KanbanList = () => {
                   >
                     <option value="">Selecione um cliente</option>
                     {clientes.map((cliente) => (
-                      <option key={cliente.id} value={cliente.id}>
+                      <option key={cliente.cedula} value={cliente.cedula}>
                         {cliente.nome}
                       </option>
                     ))}

@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
 from django.db import transaction
 from django.http import JsonResponse
-from datetime import datetime
+from django.utils import timezone
 from .serializers import (
     UsuarioSerializer,
     CustomTokenObtainPairSerializer,
@@ -672,7 +672,7 @@ def api_welcome(request):
         'description': 'Sistema de gestão empresarial completo com funcionalidades de inventário, vendas e administração de usuários.',
         'version': '1.0.0',
         'status': 'active',
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': timezone.now().isoformat(),
         'endpoints': {
             'admin': '/admin/',
             'api_root': '/api/',
@@ -966,7 +966,12 @@ class CardViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST
                         )
 
-                # Registrar histórico
+                # Atualizar card primeiro
+                card.coluna = coluna_destino
+                card.ordem = nova_ordem
+                card.save(update_fields=['coluna', 'ordem'])
+
+                # Registrar histórico após atualização
                 HistoricoMovimentacao.objects.create(
                     card=card,
                     coluna_origem=coluna_origem,
@@ -974,12 +979,6 @@ class CardViewSet(viewsets.ModelViewSet):
                     usuario=request.user,
                     observacao=request.data.get('observacao', '')
                 )
-
-                # Atualizar card
-                card.coluna = coluna_destino
-                card.ordem = nova_ordem
-                card.data_movimentacao = datetime.now()
-                card.save()
 
                 serializer = CardSerializer(card)
                 return Response(serializer.data)

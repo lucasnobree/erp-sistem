@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificação Kanban - ERP Sistema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 32px 24px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 32px 24px;
+        }
+        
+        .card-info {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-movimentacao {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+        
+        .status-criacao {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .message-content {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+        
+        .footer {
+            background-color: #f8fafc;
+            padding: 24px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .footer p {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Notificação Kanban</h1>
+            <p>Sistema ERP - Gestão de Projetos</p>
+        </div>
+        
+        <div class="content">
+            <div class="card-info">
+                <div class="card-title">{{ card.titulo }}</div>
+                <span class="status-badge status-{{ regra.tipo_trigger }}">
+                    {% if regra.tipo_trigger == 'movimentacao' %}
+                        📋 Movimentação
+                    {% elif regra.tipo_trigger == 'criacao' %}
+                        ✨ Criação
+                    {% elif regra.tipo_trigger == 'atribuicao' %}
+                        👤 Atribuição
+                    {% else %}
+                        📌 Atualização
+                    {% endif %}
+                </span>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Coluna Atual</span>
+                        <span class="info-value">{{ card.coluna.nome }}</span>
+                    </div>
+                    
+                    {% if card.responsavel %}
+                    <div class="info-item">
+                        <span class="info-label">Responsável</span>
+                        <span class="info-value">{{ card.responsavel.nome }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if card.data_vencimento %}
+                    <div class="info-item">
+                        <span class="info-label">Vencimento</span>
+                        <span class="info-value">{{ card.data_vencimento|date:"d/m/Y" }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if card.produto %}
+                    <div class="info-item">
+                        <span class="info-label">Produto</span>
+                        <span class="info-value">{{ card.produto.nome }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="message-content">
+                {{ mensagem_processada }}
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="https://erptikno-flame.vercel.app/kanban" class="btn">
+                    🚀 Acessar Sistema
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>ERP Sistema</strong> - Gestão Empresarial Completa</p>
+            <p>Esta é uma notificação automática do sistema Kanban</p>
+            <p>
+                <a href="https://erptikno-flame.vercel.app">Acessar Sistema</a> | 
+                <a href="mailto:nobreapenass@gmail.com">Suporte</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

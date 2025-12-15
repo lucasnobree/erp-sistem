@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { X, Zap, MessageSquare, Clock, Move, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const ModalRegraAutomacao = ({ kanban, onSave, onClose }) => {
+const ModalRegraAutomacao = ({ kanban, regra = null, onSave, onClose }) => {
   const [formData, setFormData] = useState({
-    nome: '',
-    tipo_trigger: 'movimentacao',
-    coluna_trigger: '',
-    dias_antes_vencimento: '',
-    acao_whatsapp: 'cliente',
-    template_mensagem: ''
+    nome: regra?.nome || '',
+    tipo_trigger: regra?.tipo_trigger || 'movimentacao',
+    coluna_trigger: regra?.coluna_trigger?.id || '',
+    dias_antes_vencimento: regra?.dias_antes_vencimento || '',
+    acao_whatsapp: regra?.acao_whatsapp || 'cliente',
+    template_mensagem: regra?.template_mensagem || ''
   });
   const [errors, setErrors] = useState({});
 
@@ -135,7 +135,7 @@ const ModalRegraAutomacao = ({ kanban, onSave, onClose }) => {
           <div className="flex items-center gap-3">
             <Zap className="h-6 w-6 text-yellow-500" />
             <h2 className="text-lg font-semibold text-gray-900">
-              Nova Regra de Automação
+              {regra ? 'Editar Regra de Automação' : 'Nova Regra de Automação'}
             </h2>
           </div>
           <button
@@ -340,7 +340,7 @@ const ModalRegraAutomacao = ({ kanban, onSave, onClose }) => {
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
               <Zap className="h-4 w-4" />
-              Criar Regra
+              {regra ? 'Salvar Alterações' : 'Criar Regra'}
             </motion.button>
           </div>
         </form>
