@@ -95,19 +95,17 @@ const Produtos = () => {
               lastFetch={lastFetch}
               cacheInfo={cacheInfo}
             />
-            {userRole === 'Administrador' && (
-              <button
-                onClick={() => {
-                  setSelectedProduto(null);
-                  setIsModalOpen(true);
-                }}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-5 w-5" />
-                <span className="hidden sm:inline">Novo Produto</span>
-                <span className="sm:hidden">Novo</span>
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setSelectedProduto(null);
+                setIsModalOpen(true);
+              }}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+              <span className="hidden sm:inline">Novo Produto</span>
+              <span className="sm:hidden">Novo</span>
+            </button>
           </div>
         </div>
         <CacheStatus 
@@ -135,7 +133,6 @@ const Produtos = () => {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         produto={selectedProduto}
-        readOnly={userRole === 'Usuario'}
       />
     </div>
   );

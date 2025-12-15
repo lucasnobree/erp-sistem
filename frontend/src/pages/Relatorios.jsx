@@ -44,11 +44,12 @@ const RelatoriosPage = () => {
       if (vendasResponse.ok) {
         const vendasData = await vendasResponse.json();
         const vendasFormatadas = vendasData.map(venda => {
-          // Formatear fecha de manera segura
-          let dataFormatada = 'Data não disponivel';
+          // Backend retorna "fecha" (campo de data da venda)
+          let dataFormatada = 'Data não disponível';
           try {
-            if (venda.data) {
-              const data = new Date(venda.data);
+            const dataRaw = venda.fecha || venda.data;
+            if (dataRaw) {
+              const data = new Date(dataRaw);
               if (!isNaN(data.getTime())) {
                 dataFormatada = data.toLocaleDateString('pt-BR', {
                   year: 'numeric',
@@ -58,7 +59,7 @@ const RelatoriosPage = () => {
               }
             }
           } catch (error) {
-            console.warn('Error formatando data:', venda.data, error);
+            console.warn('Erro formatando data:', venda.fecha || venda.data, error);
           }
           
           return {
@@ -117,7 +118,7 @@ const RelatoriosPage = () => {
                   dataVenda = venda.data.split('T')[0];
                 }
                 const temDataInicio = !dataInicio || dataVenda >= dataInicio;
-                const temFechaFin = !dataFin || dataVenda <= dataFin;
+                const temDataFin = !dataFin || dataVenda <= dataFin;
                 temFiltroData = temDataInicio && temDataFin;
               } catch (error) {
                 temFiltroData = false;

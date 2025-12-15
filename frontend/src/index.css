@@ -24,6 +24,19 @@
     overflow-x: hidden;
   }
   
+  /* Garantir legibilidade nos campos */
+  input,
+  textarea,
+  select {
+    color: rgb(17, 24, 39);
+    background-color: white;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(107, 114, 128);
+  }
+  
   /* Mejoras de accesibilidad */
   *:focus {
     outline: 2px solid #3b82f6;

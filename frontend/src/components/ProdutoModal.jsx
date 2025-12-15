@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, Plus } from 'lucide-react';
-import { supabase } from '../supabase';
+import { makeAuthenticatedRequest } from '../services/auth';
 import { Cloudinary } from '@cloudinary/url-gen';
 
 const cld = new Cloudinary({
@@ -14,9 +14,11 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
     nome: '',
     descricao: '',
     preco: '',
-    categoria_id: ''
+    categoria_id: '',
+    cliente: ''
   });
   const [categorias, setCategorias] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -25,6 +27,7 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
 
   useEffect(() => {
     fetchCategorias();
+    fetchClientes();
     if (produto) {
       setFormData({
         nome: produto.nome || '',
@@ -32,7 +35,8 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
         preco: produto.preco?.toString() || '',
         estoque: produto.estoque?.toString() || '',
         imagem_url: produto.imagem_url || '',
-        categoria_id: produto.categoria_id?.toString() || ''
+        categoria_id: produto.categoria_id?.toString() || produto.categoria?.toString() || '',
+        cliente: (produto.cliente ?? produto.cliente_id ?? produto.cliente_cedula)?.toString() || ''
       });
     } else {
       // Reset form when no produto is provided
@@ -42,23 +46,41 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
         preco: '',
         estoque: '',
         imagem_url: '',
-        categoria_id: ''
+        categoria_id: '',
+        cliente: ''
       });
     }
   }, [produto]);
 
   const fetchCategorias = async () => {
     try {
-      const { data, error } = await supabase
-        .from('categorias')
-        .select('id, nome')
-        .order('nome');
+      const response = await makeAuthenticatedRequest('/categorias/');
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Erro ao carregar categorias');
+      }
+
+      const data = await response.json();
       setCategorias(data || []);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
       setError('Erro ao carregar as categorias');
+    }
+  };
+
+  const fetchClientes = async () => {
+    try {
+      const response = await makeAuthenticatedRequest('/clientes/');
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar clientes');
+      }
+
+      const data = await response.json();
+      setClientes(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar clientes:', error);
+      setError('Erro ao carregar os clientes');
     }
   };
 
@@ -123,16 +145,21 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('categorias')
-        .insert([{ nome: novaCategoria.trim() }])
-        .select();
+      const response = await makeAuthenticatedRequest('/categorias/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: novaCategoria.trim() })
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Erro ao criar categoria');
+      }
 
-      if (data && data[0]) {
-        setCategorias(prev => [...prev, data[0]]);
-        setFormData(prev => ({ ...prev, categoria_id: data[0].id }));
+      const data = await response.json();
+
+      if (data) {
+        setCategorias(prev => [...prev, data]);
+        setFormData(prev => ({ ...prev, categoria_id: data.id }));
         setNovaCategoria('');
         setMostrarNovaCategoria(false);
       }
@@ -155,26 +182,40 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
         descricao: formData.descricao,
         preco: parseFloat(formData.preco),
         estoque: parseInt(formData.estoque),
-        imagem_url: formData.imagem_url,
-        categoria_id: formData.categoria_id || null
+        imagem_url: formData.imagem_url || '',
+        categoria: formData.categoria_id ? parseInt(formData.categoria_id) : null,
+        cliente: formData.cliente || null
       };
 
       let result;
       if (produto) {
-        const { data, error: updateError } = await supabase
-          .from('produtos')
-          .update(produtoData)
-          .eq('id', produto.id)
-          .select();
-        if (updateError) throw updateError;
-        result = data[0];
+        // Atualizar produto existente
+        const response = await makeAuthenticatedRequest(`/produtos/${produto.id}/`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(produtoData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Erro ao atualizar produto');
+        }
+
+        result = await response.json();
       } else {
-        const { data, error: insertError } = await supabase
-          .from('produtos')
-          .insert([produtoData])
-          .select();
-        if (insertError) throw insertError;
-        result = data[0];
+        // Criar novo produto
+        const response = await makeAuthenticatedRequest('/produtos/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(produtoData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Erro ao criar produto');
+        }
+
+        result = await response.json();
       }
 
       // Passar o produto atualizado/criado para o componente pai
@@ -185,11 +226,12 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
         preco: '',
         estoque: '',
         imagem_url: '',
-        categoria_id: ''
+        categoria_id: '',
+        cliente: ''
       });
     } catch (error) {
       console.error('Erro ao salvar produto:', error);
-      setError('Erro ao salvar o produto');
+      setError(error.message || 'Erro ao salvar o produto');
     } finally {
       setLoading(false);
     }
@@ -199,9 +241,9 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-md">
+      <div className="bg-white rounded-lg w-full max-w-md text-gray-900 shadow-lg">
         <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-gray-900">
             {readOnly ? 'Detalhes do Produto' : (produto ? 'Editar Produto' : 'Novo Produto')}
           </h2>
           <button
@@ -219,7 +261,7 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
               type="text"
               required={!readOnly}
               readOnly={readOnly}
-              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900 placeholder-gray-400 ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
               value={formData.nome}
               onChange={(e) => !readOnly && setFormData({ ...formData, nome: e.target.value })}
             />
@@ -229,7 +271,7 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
             <label className="block text-sm font-medium text-gray-700">Descrição</label>
             <textarea
               readOnly={readOnly}
-              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900 placeholder-gray-400 ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
               rows="3"
               value={formData.descricao}
               onChange={(e) => !readOnly && setFormData({ ...formData, descricao: e.target.value })}
@@ -244,7 +286,7 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
                 step="0.01"
                 required={!readOnly}
                 readOnly={readOnly}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900 placeholder-gray-400 ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
                 value={formData.preco}
                 onChange={(e) => !readOnly && setFormData({ ...formData, preco: e.target.value })}
               />
@@ -256,7 +298,7 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
                 type="number"
                 required={!readOnly}
                 readOnly={readOnly}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900 placeholder-gray-400 ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
                 value={formData.estoque}
                 onChange={(e) => !readOnly && setFormData({ ...formData, estoque: e.target.value })}
               />
@@ -290,6 +332,24 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700">Cliente</label>
+            <select
+              disabled={readOnly}
+              required={!readOnly}
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900 ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
+              value={formData.cliente}
+              onChange={(e) => !readOnly && setFormData({ ...formData, cliente: e.target.value })}
+            >
+              <option value="">Selecionar cliente</option>
+              {clientes.map((cliente) => (
+                <option key={cliente.cedula} value={cliente.cedula}>
+                  {cliente.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">Categoria</label>
               {!readOnly && (
@@ -307,7 +367,7 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
               <div className="flex space-x-2">
                 <input
                   type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
                   value={novaCategoria}
                   onChange={(e) => setNovaCategoria(e.target.value)}
                   placeholder="Nome da categoria"
@@ -324,7 +384,7 @@ const ProdutoModal = ({ isOpen, onClose, produto = null, readOnly = false }) => 
             ) : (
               <select
                 disabled={readOnly}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900 ${readOnly ? 'bg-gray-50' : 'focus:border-indigo-500 focus:ring-indigo-500'}`}
                 value={formData.categoria_id}
                 onChange={(e) => !readOnly && setFormData({ ...formData, categoria_id: e.target.value })}
               >
