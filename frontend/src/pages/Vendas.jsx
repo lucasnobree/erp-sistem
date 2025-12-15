@@ -125,8 +125,14 @@ const VendasPage = () => {
   };
 
   const adicionarAoCarrinho = (produtoOriginal, quantidade = 1) => {
+    console.log('[Carrinho] adicionar clique', { produtoOriginal, quantidade });
     try {
       const produto = normalizeProduto(produtoOriginal);
+      if (!produto?.id) {
+        setError('Produto sem identificador. Recarregue a página.');
+        console.error('[Carrinho] Produto sem id', produto);
+        return;
+      }
       const existeNoCarrinho = carrito.find(item => item.id === produto.id);
     
       if (existeNoCarrinho) {
@@ -188,9 +194,9 @@ const VendasPage = () => {
 
   const calcularTotal = () => {
     const subtotal = carrito.reduce((total, item) => total + (item.preco * item.cantidad), 0);
-    const imposto = subtotal * 0.19; // 19% de imposto (IVA)
-    const total = subtotal + imposto;
-    return { subtotal, impuesto, total };
+    const impostoValor = subtotal * 0.19; // 19% de imposto (IVA)
+    const total = subtotal + impostoValor;
+    return { subtotal, imposto: impostoValor, total };
   };
 
   const processarVenda = async () => {
