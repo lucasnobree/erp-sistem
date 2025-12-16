@@ -124,7 +124,7 @@ export default function Auth() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                  TIKNO Market
+                  N/A Systems
                 </motion.h1>
               </div>
               <motion.h2 
